@@ -28,13 +28,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Le répertoire build/ d'AdonisJS est auto-suffisant (son propre package.json)
+# Code compilé (auto-suffisant côté JS)
 COPY --from=builder /app/apps/api/build ./
-COPY --from=builder /app/apps/api/package.json ./
 
-RUN pnpm install --prod --ignore-scripts
+# node_modules déjà résolus dans le builder — évite de relancer pnpm install
+# sans le contexte monorepo (ce qui échouerait sur @pokegrind/shared@workspace:*)
+COPY --from=builder /app/node_modules        ./node_modules
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder /app/packages/shared     ./packages/shared
+COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
 ENV NODE_ENV=production
 EXPOSE 3333
