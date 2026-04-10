@@ -1,0 +1,87 @@
+/* PokeGrind Design Tokens — Gen 4-5 Animé/Manga Style */
+:root {
+  /* ── Fonds ──────────────────────────────────────────────── */
+  --color-bg-primary:   #1a1c2e;
+  --color-bg-secondary: #252742;
+  --color-bg-tertiary:  #2f3259;
+  --color-bg-overlay:   rgba(26, 28, 46, 0.92);
+
+  /* ── Accents principaux ─────────────────────────────────── */
+  --color-accent-yellow: #ffd700;
+  --color-accent-red:    #e63946;
+  --color-accent-blue:   #4fc3f7;
+  --color-accent-purple: #9c6ade;
+
+  /* ── Rarités ────────────────────────────────────────────── */
+  --color-rarity-common:    #a8b5c2;
+  --color-rarity-rare:      #4fc3f7;
+  --color-rarity-epic:      #c678dd;
+  --color-rarity-legendary: #ffd700;
+  --color-rarity-mythic:    #ff6b9d;
+  --color-rarity-shiny:     #ffe066;
+
+  /* ── Texte ──────────────────────────────────────────────── */
+  --color-text-primary:   #f0f0f0;
+  --color-text-secondary: #a0aec0;
+  --color-text-muted:     #6b7a99;
+  --color-text-accent:    #ffd700;
+
+  /* ── Types Pokémon ──────────────────────────────────────── */
+  --type-fire:     #ff6b35;
+  --type-water:    #4fc3f7;
+  --type-grass:    #56c96d;
+  --type-electric: #ffd700;
+  --type-psychic:  #ff6b9d;
+  --type-ice:      #96d9e8;
+  --type-dragon:   #6c5ce7;
+  --type-dark:     #4a4a6a;
+  --type-fairy:    #ffb3d9;
+  --type-fighting: #d4522a;
+  --type-poison:   #a855c8;
+  --type-ground:   #c8a85e;
+  --type-rock:     #8b7355;
+  --type-bug:      #91b800;
+  --type-ghost:    #6c5ce7;
+  --type-steel:    #8fa8c8;
+  --type-normal:   #a8a878;
+  --type-flying:   #89aadc;
+
+  /* ── Typographie ────────────────────────────────────────── */
+  --font-primary: 'Nunito', sans-serif;
+  --font-display: 'Bangers', cursive;
+
+  /* ── Espacements ────────────────────────────────────────── */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
+  --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
+  --space-8: 32px;  --space-10: 40px; --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── Rayons de bordure ──────────────────────────────────── */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-full: 9999px;
+
+  /* ── Ombres ─────────────────────────────────────────────── */
+  --shadow-sm:          0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:          0 4px 12px rgba(0,0,0,0.5);
+  --shadow-lg:          0 8px 24px rgba(0,0,0,0.6);
+  --shadow-glow-yellow: 0 0 16px rgba(255,215,0,0.4);
+  --shadow-glow-purple: 0 0 16px rgba(156,106,222,0.4);
+  --shadow-glow-blue:   0 0 16px rgba(79,195,247,0.4);
+  --shadow-glow-pink:   0 0 16px rgba(255,107,157,0.5);
+  --shadow-glow-red:    0 0 16px rgba(230,57,70,0.4);
+
+  /* ── Transitions ────────────────────────────────────────── */
+  --transition-fast:   all 0.15s ease;
+  --transition-base:   all 0.2s ease;
+  --transition-normal: all 0.25s ease;
+  --transition-slow:   all 0.4s ease;
+
+  /* ── Z-index ────────────────────────────────────────────── */
+  --z-dropdown: 100;
+  --z-modal:    200;
+  --z-toast:    300;
+  --z-tooltip:  400;
+}

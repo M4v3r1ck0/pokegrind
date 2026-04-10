@@ -1,0 +1,26 @@
+{
+  "name": "pokegrind",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "docker compose -f docker/docker-compose.yml up",
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "db:migrate": "pnpm --filter api exec node --import=tsx/esm ace.js migration:run",
+    "db:seed": "pnpm --filter api exec node --import=tsx/esm ace.js db:seed",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "@swc/core",
+      "argon2",
+      "esbuild",
+      "msgpackr-extract"
+    ]
+  }
+}

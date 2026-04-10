@@ -1,0 +1,17 @@
+node_modules
+.pnpm-store
+*.log
+
+# Apps
+apps/api/build
+apps/web/.nuxt
+apps/web/.output
+apps/admin/dist
+
+# Env
+.env
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db

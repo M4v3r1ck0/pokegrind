@@ -1,0 +1,32 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy workspace files for dependency resolution
+COPY package.json pnpm-lock.yaml* ./
+
+RUN pnpm install --frozen-lockfile --prod=false
+
+COPY . .
+
+RUN node ace build
+
+# ── Production stage ──────────────────────────────────────────────────────────
+FROM node:20-alpine
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+COPY --from=builder /app/build ./
+COPY --from=builder /app/package.json ./
+
+RUN pnpm install --prod --ignore-scripts
+
+ENV NODE_ENV=production
+EXPOSE 3333
+
+CMD ["node", "bin/server.js"]
