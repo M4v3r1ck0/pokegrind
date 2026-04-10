@@ -2,6 +2,9 @@ version: '3.9'
 
 # Production — usage:
 #   docker compose -f docker/docker-compose.prod.yml up -d --build
+#
+# Build context est la RACINE du monorepo (../) pour que pnpm puisse
+# résoudre les workspace packages (packages/shared, etc.).
 
 services:
   postgres:
@@ -33,8 +36,8 @@ services:
 
   api:
     build:
-      context: ../apps/api
-      dockerfile: Dockerfile.prod
+      context: ..
+      dockerfile: apps/api/Dockerfile.prod
     restart: always
     env_file: ../apps/api/.env.prod
     environment:
@@ -49,8 +52,8 @@ services:
 
   web:
     build:
-      context: ../apps/web
-      dockerfile: Dockerfile.prod
+      context: ..
+      dockerfile: apps/web/Dockerfile.prod
     restart: always
     environment:
       NODE_ENV: production
@@ -60,8 +63,8 @@ services:
 
   admin:
     build:
-      context: ../apps/admin
-      dockerfile: Dockerfile.prod
+      context: ..
+      dockerfile: apps/admin/Dockerfile.prod
     restart: always
     depends_on:
       - api

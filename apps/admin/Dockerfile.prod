@@ -4,18 +4,27 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --no-frozen-lockfile
+# ── Workspace manifests (layer cache) ────────────────────────────────────────
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 
-COPY . .
+# Manifests des packages nécessaires avant pnpm install
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/admin/package.json       ./apps/admin/
 
-# Skip type-check in Docker (already checked in CI)
-RUN pnpm exec vite build
+# Installe les dépendances de admin ET ses dépendances workspace
+RUN pnpm install --no-frozen-lockfile --filter "admin..."
+
+# ── Sources ───────────────────────────────────────────────────────────────────
+COPY packages/shared/ ./packages/shared/
+COPY apps/admin/      ./apps/admin/
+
+# Vite build → apps/admin/dist/
+RUN pnpm --filter admin exec vite build
 
 # ── Production stage (nginx static) ──────────────────────────────────────────
 FROM nginx:alpine
 
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/apps/admin/dist /usr/share/nginx/html
 
 # SPA fallback: toutes les routes → index.html
 RUN printf 'server {\n\

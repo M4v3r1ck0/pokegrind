@@ -2,17 +2,24 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy workspace files for dependency resolution
-COPY package.json pnpm-lock.yaml* ./
+# ── Workspace manifests (layer cache) ────────────────────────────────────────
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 
-RUN pnpm install --no-frozen-lockfile --prod=false
+# Manifests des packages nécessaires avant pnpm install
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/api/package.json         ./apps/api/
 
-COPY . .
+# Installe les dépendances de api ET ses dépendances workspace (@pokegrind/shared)
+RUN pnpm install --no-frozen-lockfile --filter "api..."
 
-RUN node ace build
+# ── Sources ───────────────────────────────────────────────────────────────────
+COPY packages/shared/ ./packages/shared/
+COPY apps/api/        ./apps/api/
+
+# Compile TypeScript → apps/api/build/
+RUN pnpm --filter api exec node ace build
 
 # ── Production stage ──────────────────────────────────────────────────────────
 FROM node:20-alpine
@@ -21,8 +28,9 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-COPY --from=builder /app/build ./
-COPY --from=builder /app/package.json ./
+# Le répertoire build/ d'AdonisJS est auto-suffisant (son propre package.json)
+COPY --from=builder /app/apps/api/build ./
+COPY --from=builder /app/apps/api/package.json ./
 
 RUN pnpm install --prod --ignore-scripts
 
