@@ -6,7 +6,7 @@
 set -euo pipefail
 
 BRANCH="${1:-main}"
-COMPOSE="docker compose -f docker/docker-compose.prod.yml"
+COMPOSE="docker compose -f docker/docker-compose.prod.yml --env-file apps/api/.env.prod"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 echo "=== PokeGrind Deploy — branche: $BRANCH — $TIMESTAMP ==="
@@ -27,7 +27,7 @@ $COMPOSE build --no-cache api web admin
 
 # 4. Migrations base de données
 echo "→ Application des migrations..."
-$COMPOSE run --rm api node ace migration:run --force
+$COMPOSE run --rm api node bin/console.js migration:run --force
 
 # 5. Rolling restart : zero-downtime si possible
 echo "→ Redémarrage des services..."
