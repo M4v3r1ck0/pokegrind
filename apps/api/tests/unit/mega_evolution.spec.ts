@@ -74,7 +74,6 @@ test.group('canMegaEvolve', () => {
   })
 
   test('returns true for Rayquaza (stone-free mega) when no item required', ({ assert }) => {
-    const pokemon = makePokemon({ species_id: 384, equipped_item_id: null })
     const megas = [makeMega({ species_id: 384, mega_stone_item_id: null })]
     // Rayquaza has null stone but equipped_item_id check would fail for null item...
     // Actually by our spec: stone-free mega only if equipped_item_id !== null doesn't apply

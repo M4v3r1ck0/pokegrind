@@ -86,9 +86,6 @@ function formatNumber(n: number | string): string {
   return Number(n).toLocaleString('fr-FR')
 }
 
-function difficultyLabel(d: string) {
-  return { normal: 'Normal', hard: 'Difficile', extreme: 'Extrême' }[d] ?? d
-}
 
 function progressPercent(raid: any): number {
   const hp = Number(raid.hp_remaining ?? 0)

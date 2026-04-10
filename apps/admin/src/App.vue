@@ -9,13 +9,6 @@ const auth = useAdminAuthStore()
 
 const is_public = computed(() => route.meta.public)
 
-const nav_items = [
-  { label: 'Dashboard', icon: 'dashboard', to: '/dashboard' },
-  { label: 'Joueurs', icon: 'people', to: '/players' },
-  { label: 'Audit Gems', icon: 'diamond', to: '/gems-audit' },
-  { label: 'Logs admin', icon: 'list_alt', to: '/logs' },
-]
-
 function logout() {
   auth.logout()
   router.push('/login')
@@ -85,11 +78,11 @@ function logout() {
             <span class="font-bold text-lg">PokeGrind Admin</span>
           </template>
           <template #right>
-            <span class="text-sm text-secondary">{{ auth.player?.username }}</span>
+            <span class="text-sm text-secondary">{{ auth.username }}</span>
             <VaBadge
-              v-if="auth.player"
-              :text="auth.player.role"
-              :color="auth.player.role === 'admin' ? 'danger' : 'warning'"
+              v-if="auth.isAuthenticated"
+              :text="auth.role ?? ''"
+              :color="auth.role === 'admin' ? 'danger' : 'warning'"
               class="ml-2"
             />
           </template>

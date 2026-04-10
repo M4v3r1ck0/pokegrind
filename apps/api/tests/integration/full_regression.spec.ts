@@ -90,7 +90,7 @@ test.group('REGRESSION — Gacha', () => {
 
   test('GACHA shiny → IVs générés avec rareté shiny', ({ assert }) => {
     // shiny génère des IVs dans [0,31] (GDD §5 : taux shiny 1/8192)
-    const ivs = generateIVs('shiny')
+    const ivs = generateIVs('common', true)
     const vals = Object.values(ivs)
     assert.equal(vals.length, 6) // hp, atk, def, spatk, spdef, speed
     for (const v of vals) {
@@ -100,7 +100,7 @@ test.group('REGRESSION — Gacha', () => {
   })
 
   test('GACHA légendaire → IVs générés avec rareté légendaire', ({ assert }) => {
-    const ivs = generateIVs('legendary')
+    const ivs = generateIVs('legendary', false)
     const vals = Object.values(ivs)
     assert.equal(vals.length, 6)
     for (const v of vals) {
@@ -111,7 +111,7 @@ test.group('REGRESSION — Gacha', () => {
 
   test('GACHA commun → IVs dans [0, 31]', ({ assert }) => {
     for (let i = 0; i < 20; i++) {
-      const ivs = generateIVs('common')
+      const ivs = generateIVs('common', false)
       for (const v of Object.values(ivs)) {
         assert.isAtLeast(v, 0)
         assert.isAtMost(v, 31)
@@ -120,7 +120,7 @@ test.group('REGRESSION — Gacha', () => {
   })
 
   test('GACHA épique → au moins 1 IV ≥ 20', ({ assert }) => {
-    const ivs = generateIVs('epic')
+    const ivs = generateIVs('epic', false)
     const has_high = Object.values(ivs).some((v) => v >= 20)
     assert.isTrue(has_high)
   })
@@ -323,10 +323,10 @@ test.group('REGRESSION — Raids Mondiaux', () => {
 test.group('REGRESSION — Gigantamax', () => {
   test('GMAX → canGigantamax uniquement en raid et tower (mode check)', ({ assert }) => {
     // canGigantamax(mode, species_id, available_gmax, player_unlocked, gmax_already_used)
-    const fake_gmax = [{ species_id: 6, gmax_hp_mult: 1.5, gmax_atk_mult: 1.3, gmax_def_mult: 1.2, gmax_spatk_mult: 1.3, gmax_spdef_mult: 1.2, gmax_speed_mult: 1.1 }]
+    const fake_gmax: any[] = [{ species_id: 6, gmax_hp_mult: 1.5, gmax_atk_mult: 1.3, gmax_def_mult: 1.2, gmax_spatk_mult: 1.3, gmax_spdef_mult: 1.2, gmax_speed_mult: 1.1 }]
     // Mode non-raid/tower → false quelle que soit la config
-    assert.isFalse(canGigantamax('combat', 6, fake_gmax, [6], false))
-    assert.isFalse(canGigantamax('dungeon' as any, 6, fake_gmax, [6], false))
+    assert.isFalse(canGigantamax('idle', 6, fake_gmax, [6], false))
+    assert.isFalse(canGigantamax('dungeon', 6, fake_gmax, [6], false))
     // Mode raid/tower avec les bonnes conditions → true
     assert.isTrue(canGigantamax('raid', 6, fake_gmax, [6], false))
     assert.isTrue(canGigantamax('tower', 6, fake_gmax, [6], false))

@@ -10,7 +10,6 @@ import {
   calcWinProbability,
   TIER_GEMS,
   ELO_FLOOR,
-  type PvpTier,
 } from '../../app/services/EloService.js'
 
 // ─── ELO : calculs de base ────────────────────────────────────────────────────
@@ -163,8 +162,8 @@ test.group('Cas métier PvP', () => {
     // La victoire défenseur est le fallback — vérifié dans le code
     // winner = atk_alive > 0 && def_alive === 0 ? 'attacker' : 'defender'
     // Après timeout : deux équipes en vie → 'defender'
-    const atk_alive_after_timeout = 3
-    const def_alive_after_timeout = 2
+    const atk_alive_after_timeout: number = 3
+    const def_alive_after_timeout: number = 2
     const winner = atk_alive_after_timeout > 0 && def_alive_after_timeout === 0
       ? 'attacker'
       : 'defender'

@@ -33,7 +33,7 @@ const prefs = ref<NotifPrefs>({
 const pref_labels: { key: keyof NotifPrefs; label: string; desc: string }[] = [
   { key: 'hatch_ready',    label: 'Éclosion prête', desc: 'Quand un Pokémon en pension est prêt à éclore' },
   { key: 'boss_milestone', label: 'Boss milestone',  desc: 'Quand vous atteignez un palier de boss' },
-  { key: 'event_active',   label: 'Événement actif', desc: 'Lors du démarrage d'un événement limité' },
+  { key: 'event_active',   label: 'Événement actif', desc: "Lors du démarrage d'un événement limité" },
   { key: 'bf_rotation',    label: 'Battle Frontier', desc: 'Nouvelle rotation hebdomadaire' },
   { key: 'pvp_result',     label: 'Résultat PvP',    desc: 'Quand votre défense est attaquée' },
   { key: 'raid',           label: 'Raid disponible', desc: 'Nouveau Raid Mondial actif' },
