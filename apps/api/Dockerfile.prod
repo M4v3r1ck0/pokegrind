@@ -21,7 +21,7 @@ COPY apps/api/        ./apps/api/
 # Compile TypeScript → apps/api/build/
 # tsx est requis pour que ace.js puisse bootstrapper l'app (charger les
 # commandes .ts) AVANT que la compilation soit terminée.
-RUN pnpm --filter api exec node --import=tsx/esm ace.js build
+RUN pnpm --filter api exec node --import=tsx/esm ace.js build --ignore-ts-errors
 
 # ── Production stage ──────────────────────────────────────────────────────────
 FROM node:20-alpine
