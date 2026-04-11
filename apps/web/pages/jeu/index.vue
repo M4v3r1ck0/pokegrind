@@ -167,9 +167,12 @@ const hubCards: HubCard[] = [
 
 <style scoped>
 .hub-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: 20px;
 }
 
 /* ── Welcome banner ─────────────────────────────────────────────────── */
@@ -178,18 +181,18 @@ const hubCards: HubCard[] = [
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-4);
-  background: var(--color-bg-secondary);
+  gap: 16px;
+  background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--radius-xl);
-  padding: var(--space-5) var(--space-6);
-  background-image: radial-gradient(ellipse at 80% 50%, rgba(156,106,222,0.1) 0%, transparent 60%);
+  border-radius: 16px;
+  padding: 20px 24px;
+  background-image: radial-gradient(ellipse at 80% 50%, rgba(156,106,222,0.08) 0%, transparent 60%);
 }
 
 .welcome-title {
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  letter-spacing: 0.04em;
-  color: var(--color-text-primary);
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  font-weight: 900;
+  color: #f0f0f0;
 }
 
 .player-name {
@@ -201,15 +204,15 @@ const hubCards: HubCard[] = [
 
 .welcome-sub {
   font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  margin-top: var(--space-1);
+  color: rgba(255,255,255,0.5);
+  margin-top: 4px;
 }
-.welcome-sub strong { color: var(--color-accent-yellow); }
+.welcome-sub strong { color: #ffd700; }
 
 .welcome-right {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 .resource-chip {
@@ -219,26 +222,28 @@ const hubCards: HubCard[] = [
   font-weight: 700;
   font-size: 1rem;
 }
-.resource-gold { color: var(--color-accent-yellow); }
+.resource-gold { color: #ffd700; }
 
 /* ── Hub grid ───────────────────────────────────────────────────────── */
 .hub-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-4);
+  gap: 10px;
 }
 
 .hub-card {
-  position: relative;
-  background: var(--color-bg-secondary);
+  background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--radius-xl);
-  padding: var(--space-5);
+  border-radius: 12px;
+  padding: 16px;
   text-decoration: none;
+  color: inherit;
+  transition: all 0.15s;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  transition: var(--transition-base);
+  gap: 6px;
+  cursor: pointer;
+  position: relative;
   overflow: hidden;
 }
 
@@ -248,37 +253,37 @@ const hubCards: HubCard[] = [
   inset: 0;
   background: radial-gradient(ellipse at 80% 20%, var(--glow, rgba(156,106,222,0.2)) 0%, transparent 60%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
   pointer-events: none;
 }
 
 .hub-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255,255,255,0.15);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+  transform: translateY(-1px);
 }
 
 .hub-card:hover::before { opacity: 1; }
 
 /* accent border-top flash on hover */
-.hub-card.accent-red:hover     { border-top-color: var(--color-accent-red); }
-.hub-card.accent-green:hover   { border-top-color: var(--type-grass); }
-.hub-card.accent-purple:hover  { border-top-color: var(--color-accent-purple); }
-.hub-card.accent-blue:hover    { border-top-color: var(--color-accent-blue); }
+.hub-card.accent-red:hover     { border-top-color: #e63946; }
+.hub-card.accent-green:hover   { border-top-color: #56c96d; }
+.hub-card.accent-purple:hover  { border-top-color: #9c6ade; }
+.hub-card.accent-blue:hover    { border-top-color: #4fc3f7; }
 .hub-card.accent-yellow:hover,
-.hub-card.accent-gold:hover    { border-top-color: var(--color-accent-yellow); }
+.hub-card.accent-gold:hover    { border-top-color: #ffd700; }
 
 .hub-hot {
   position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
+  top: 12px;
+  right: 12px;
   font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.1em;
-  background: var(--color-accent-red);
+  background: #e63946;
   color: #fff;
   padding: 2px 7px;
-  border-radius: var(--radius-full);
+  border-radius: 999px;
   animation: pulse-gold 2s ease-in-out infinite;
 }
 
@@ -289,35 +294,34 @@ const hubCards: HubCard[] = [
 }
 
 .hub-title {
-  font-family: var(--font-primary);
+  font-size: 14px;
   font-weight: 800;
-  font-size: 1rem;
-  color: var(--color-text-primary);
-  margin-top: var(--space-1);
+  color: #f0f0f0;
+  margin-top: 4px;
 }
 
 .hub-desc {
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
   line-height: 1.5;
   flex: 1;
 }
 
 .hub-arrow {
   font-size: 0.85rem;
-  color: var(--color-text-muted);
-  transition: var(--transition-fast);
+  color: rgba(255,255,255,0.3);
+  transition: all 0.15s;
   align-self: flex-end;
 }
 .hub-card:hover .hub-arrow {
-  color: var(--color-text-primary);
+  color: #f0f0f0;
   transform: translateX(4px);
 }
 
 /* ── Quick links ────────────────────────────────────────────────────── */
 .quick-links {
   display: flex;
-  gap: var(--space-3);
+  gap: 12px;
   flex-wrap: wrap;
 }
 
@@ -326,18 +330,18 @@ const hubCards: HubCard[] = [
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border-radius: var(--radius-full);
+  border-radius: 999px;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.09);
   text-decoration: none;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--color-text-secondary);
-  transition: var(--transition-fast);
+  color: rgba(255,255,255,0.5);
+  transition: all 0.15s;
 }
 .ql-link:hover {
   background: rgba(255,255,255,0.09);
-  color: var(--color-text-primary);
+  color: #f0f0f0;
   border-color: rgba(255,255,255,0.18);
 }
 
@@ -351,8 +355,9 @@ const hubCards: HubCard[] = [
 }
 
 @media (max-width: 480px) {
-  .hub-grid { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-  .hub-card  { padding: var(--space-4); }
+  .hub-page { padding: 16px; }
+  .hub-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hub-card { padding: 12px; }
   .welcome-banner { flex-direction: column; align-items: flex-start; }
 }
 </style>
