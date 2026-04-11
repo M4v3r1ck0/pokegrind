@@ -4,8 +4,10 @@
  */
 import axios from 'axios'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+
 const api = axios.create({
-  baseURL: '/api/admin',
+  baseURL: `${API_BASE}/admin`,
   withCredentials: true,
 })
 
@@ -95,7 +97,7 @@ export function useAdminApi() {
 
     // Auth direct (login avec le endpoint joueur)
     login: (email: string, password: string) =>
-      axios.post('/api/auth/login', { email, password }, { withCredentials: true }),
+      axios.post(`${API_BASE}/auth/login`, { email, password }, { withCredentials: true }),
 
     // ── Config globale ─────────────────────────────────────────────────────
     getConfig: () => api.get('/config'),

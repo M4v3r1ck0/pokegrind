@@ -61,7 +61,7 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      NUXT_PUBLIC_API_BASE: https://pokegrind.fr/api
+      NUXT_PUBLIC_API_BASE: https://api.pokegrind.fr/api
     depends_on:
       - api
 
@@ -69,6 +69,8 @@ services:
     build:
       context: ..
       dockerfile: apps/admin/Dockerfile.prod
+      args:
+        VITE_API_BASE_URL: https://api.pokegrind.fr/api
     restart: always
     ports:
       - "8080:80"

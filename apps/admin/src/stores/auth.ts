@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+
 export const useAdminAuthStore = defineStore('adminAuth', {
   state: () => ({
     token: localStorage.getItem('admin_token') as string | null,
@@ -11,7 +13,7 @@ export const useAdminAuthStore = defineStore('adminAuth', {
 
   actions: {
     async login(email: string, password: string) {
-      const { data } = await axios.post('/api/auth/login', { email, password }, {
+      const { data } = await axios.post(`${API_BASE}/auth/login`, { email, password }, {
         withCredentials: true,
       })
       const allowed = ['admin', 'mod', 'support']
