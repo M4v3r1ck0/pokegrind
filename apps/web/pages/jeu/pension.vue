@@ -50,7 +50,7 @@ async function openDepositModal(slot_number: number) {
   isLoadingPokemon.value = true
   try {
     const api = nuxtApp.$api as any
-    const { data } = await api.get('/api/player/pokemon', {
+    const { data } = await api.get('/player/pokemon', {
       params: { level: 100, available_for_daycare: true, per_page: 100 },
     })
     depositPokemonList.value = data.data ?? []
@@ -66,7 +66,7 @@ async function goToPartnerStep() {
   depositStep.value = 'partner'
   try {
     const api = nuxtApp.$api as any
-    const { data } = await api.get(`/api/player/daycare/compatible/${selectedPokemonId.value}`)
+    const { data } = await api.get(`/player/daycare/compatible/${selectedPokemonId.value}`)
     compatiblePokemon.value = data.pokemon ?? []
   } catch { compatiblePokemon.value = [] }
 }
