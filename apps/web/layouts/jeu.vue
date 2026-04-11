@@ -14,10 +14,15 @@ onMounted(async () => {
   if (auth.accessToken && !auth.player) {
     try {
       await auth.fetchMe()
-    } catch {
-      // Token expiré et refresh cookie absent → déconnexion propre
-      auth.clearSession()
-      await router.push('/auth/login')
+      // fetchMe() gère le refresh automatiquement — si on arrive ici, c'est OK
+    } catch (err: any) {
+      // Seulement déconnecter si la session est vraiment expirée
+      // (refresh token invalide ou absent)
+      if (err?.message === 'SESSION_EXPIRED' || !auth.accessToken) {
+        auth.clearSession()
+        await router.push('/auth/login')
+      }
+      // Sinon : erreur réseau ou autre → ne pas déconnecter, laisser l'utilisateur
     }
   }
 })
