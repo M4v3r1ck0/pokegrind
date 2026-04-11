@@ -186,7 +186,7 @@ export default class TeamController {
       .from('pokemon_learnset as pl')
       .join('moves as m', 'pl.move_id', 'm.id')
       .where('pl.species_id', pokemon.speciesId)
-      .where('pl.learn_method', 'level-up')
+      .where('pl.learn_method', 'level')
       .where('pl.level_learned_at', '<=', pokemon.level)
       .select(
         'pl.move_id',
@@ -238,7 +238,7 @@ export default class TeamController {
       .from('pokemon_learnset as pl')
       .join('moves as m', 'pl.move_id', 'm.id')
       .where('pl.species_id', pokemon.speciesId)
-      .where('pl.learn_method', 'level-up')
+      .where('pl.learn_method', 'level')
       .where('pl.level_learned_at', '<=', pokemon.level)
       .whereIn('pl.move_id', moveIds)
       .select('pl.move_id', 'm.pp')

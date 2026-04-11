@@ -425,7 +425,7 @@ class CombatProgressionService {
       .from('pokemon_learnset')
       .whereIn('level_learned_at', new_levels)
       .where('species_id', species_id)
-      .where('learn_method', 'level-up')
+      .where('learn_method', 'level')
       .join('moves', 'moves.id', 'pokemon_learnset.move_id')
       .select('pokemon_learnset.move_id', 'moves.pp as pp')
 

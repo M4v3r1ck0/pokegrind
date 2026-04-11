@@ -79,7 +79,7 @@ export default class StarterService {
     let learnsetRows = await db
       .from('pokemon_learnset')
       .where('species_id', starterId)
-      .where('learn_method', 'level-up')
+      .where('learn_method', 'level')
       .where('level_learned_at', '<=', 5)
       .join('moves', 'moves.id', 'pokemon_learnset.move_id')
       .select('pokemon_learnset.move_id', 'moves.pp as pp')
@@ -91,7 +91,7 @@ export default class StarterService {
       learnsetRows = await db
         .from('pokemon_learnset')
         .where('species_id', starterId)
-        .where('learn_method', 'level-up')
+        .where('learn_method', 'level')
         .join('moves', 'moves.id', 'pokemon_learnset.move_id')
         .select('pokemon_learnset.move_id', 'moves.pp as pp')
         .orderBy('pokemon_learnset.level_learned_at', 'asc')
