@@ -14,10 +14,11 @@ const SELL_PRICES: Record<string, number> = {
 const inventoryQueryValidator = vine.compile(
   vine.object({
     page: vine.number().positive().optional(),
-    limit: vine.number().min(1).max(100).optional(),
+    limit: vine.number().min(1).max(200).optional(),
     rarity: vine.string().in(['common', 'rare', 'epic', 'legendary', 'mythic']).optional(),
     is_shiny: vine.boolean().optional(),
-    sort: vine.string().in(['recent', 'rarity', 'iv_total', 'name']).optional(),
+    sort: vine.string().in(['recent', 'rarity', 'iv_total', 'name', 'level']).optional(),
+    min_level: vine.number().min(1).max(100).optional(),
   })
 )
 
@@ -95,6 +96,9 @@ export default class InventoryController {
     if (query.is_shiny !== undefined) {
       q = q.where('pp.is_shiny', query.is_shiny)
     }
+    if (query.min_level !== undefined) {
+      q = q.where('pp.level', '>=', query.min_level)
+    }
 
     // Tri
     switch (query.sort) {
@@ -111,6 +115,9 @@ export default class InventoryController {
       case 'name':
         q = q.orderBy('ps.name_fr', 'asc')
         break
+      case 'level':
+        q = q.orderBy('pp.level', 'desc').orderBy('pp.created_at', 'desc')
+        break
       default:
         q = q.orderBy('pp.created_at', 'desc')
     }
@@ -123,6 +130,7 @@ export default class InventoryController {
 
     if (query.rarity) countQ = countQ.where('ps.rarity', query.rarity)
     if (query.is_shiny !== undefined) countQ = countQ.where('pp.is_shiny', query.is_shiny)
+    if (query.min_level !== undefined) countQ = countQ.where('pp.level', '>=', query.min_level)
 
     const total = await countQ.first()
 
