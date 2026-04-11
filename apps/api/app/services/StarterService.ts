@@ -75,6 +75,42 @@ export default class StarterService {
       hiddenTalentMoveId: null,
     })
 
+    // Récupérer les 4 premiers moves level-up du learnset ≤ level 5
+    let learnsetRows = await db
+      .from('pokemon_learnset')
+      .where('species_id', starterId)
+      .where('learn_method', 'level-up')
+      .where('level_learned_at', '<=', 5)
+      .join('moves', 'moves.id', 'pokemon_learnset.move_id')
+      .select('pokemon_learnset.move_id', 'moves.pp as pp')
+      .orderBy('pokemon_learnset.level_learned_at', 'asc')
+      .limit(4)
+
+    // Fallback : si aucun move ≤ 5, prendre les premiers du learnset
+    if (learnsetRows.length === 0) {
+      learnsetRows = await db
+        .from('pokemon_learnset')
+        .where('species_id', starterId)
+        .where('learn_method', 'level-up')
+        .join('moves', 'moves.id', 'pokemon_learnset.move_id')
+        .select('pokemon_learnset.move_id', 'moves.pp as pp')
+        .orderBy('pokemon_learnset.level_learned_at', 'asc')
+        .limit(4)
+    }
+
+    if (learnsetRows.length > 0) {
+      await db.table('player_pokemon_moves').insert(
+        learnsetRows.map((row: any, i: number) => ({
+          id: crypto.randomUUID(),
+          player_pokemon_id: pokemon.id,
+          slot: i + 1,
+          move_id: row.move_id,
+          pp_current: row.pp,
+          pp_max: row.pp,
+        }))
+      )
+    }
+
     return pokemon
   }
 
