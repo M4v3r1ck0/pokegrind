@@ -147,14 +147,21 @@ export default class GachaService {
    */
   static async performPulls(
     player: Player,
-    count: 1 | 10,
+    count: 1 | 10 | 25 | 50 | 100,
     banner_id?: string
   ): Promise<GachaResult[]> {
     const legendaryThreshold = (await this.hasLegendaryPityUpgrade(player.id))
       ? PITY_LEGENDARY_UPGRADED
       : PITY_LEGENDARY_DEFAULT
 
-    const goldCost = count === 1 ? GOLD_COST_1 : GOLD_COST_10
+    const goldCostMap: Record<number, number> = {
+      1:   GOLD_COST_1,
+      10:  GOLD_COST_10,
+      25:  22500,
+      50:  42500,
+      100: 80000,
+    }
+    const goldCost = goldCostMap[count] ?? count * GOLD_COST_1
 
     if (Number(player.gold) < goldCost) {
       throw new Error(`Or insuffisant (requis: ${goldCost}, disponible: ${player.gold})`)
@@ -225,6 +232,43 @@ export default class GachaService {
         equippedItemId: null,
         hiddenTalentMoveId: null,
       })
+
+      // Assigner les 4 premiers moves level-up
+      try {
+        let moveRows = await db
+          .from('pokemon_learnset')
+          .where('species_id', species.id)
+          .where('learn_method', 'level')
+          .where('level_learned_at', '<=', 1)
+          .join('moves', 'moves.id', 'pokemon_learnset.move_id')
+          .select('pokemon_learnset.move_id', 'moves.pp as pp')
+          .orderBy('pokemon_learnset.level_learned_at', 'asc')
+          .limit(4)
+
+        if (moveRows.length === 0) {
+          moveRows = await db
+            .from('pokemon_learnset')
+            .where('species_id', species.id)
+            .where('learn_method', 'level')
+            .join('moves', 'moves.id', 'pokemon_learnset.move_id')
+            .select('pokemon_learnset.move_id', 'moves.pp as pp')
+            .orderBy('pokemon_learnset.level_learned_at', 'asc')
+            .limit(4)
+        }
+
+        if (moveRows.length > 0) {
+          await db.table('player_pokemon_moves').insert(
+            moveRows.map((row: any, i: number) => ({
+              id: crypto.randomUUID(),
+              player_pokemon_id: pokemon.id,
+              slot: i + 1,
+              move_id: row.move_id,
+              pp_current: row.pp,
+              pp_max: row.pp,
+            }))
+          )
+        }
+      } catch { /* non-bloquant */ }
 
       // Mise à jour Pokédex (arrière-plan)
       const iv_total = ivs.hp + ivs.atk + ivs.def + ivs.spatk + ivs.spdef + ivs.speed
