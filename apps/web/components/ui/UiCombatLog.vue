@@ -23,13 +23,16 @@ const props = withDefaults(defineProps<{
 const logEl = ref<HTMLElement | null>(null)
 const visible = computed(() => props.entries.slice(-props.max))
 
-watch(() => props.entries.length, async () => {
-  if (props.autoScroll) {
-    await nextTick()
-    setTimeout(() => {
-      if (logEl.value) logEl.value.scrollTop = logEl.value.scrollHeight
-    }, 80)
-  }
+watchEffect(() => {
+  const _ = visible.value // référencer pour la réactivité
+  if (!props.autoScroll) return
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (logEl.value) {
+        logEl.value.scrollTop = logEl.value.scrollHeight
+      }
+    })
+  })
 })
 
 onMounted(async () => {
