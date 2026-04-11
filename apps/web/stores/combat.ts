@@ -139,6 +139,14 @@ export const useCombatStore = defineStore('combat', {
         this.updateHP(event.pokemon_id, event.hp_remaining, event.hp_max)
       })
 
+      socket.on('combat:level_up', (event: any) => {
+        const name = this.getPokemonName(event.pokemon_id)
+        this.addLog(`⬆️ ${name} monte au niveau ${event.new_level} !`, 'info')
+        // Mettre à jour le niveau affiché dans l'équipe joueur
+        const pokemon = this.player_team.find((p) => p.id === event.pokemon_id)
+        if (pokemon) pokemon.level = event.new_level
+      })
+
       // Stocker la référence module-level pour le guard
       _socket = socket
 

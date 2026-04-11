@@ -330,6 +330,123 @@ class CombatProgressionService {
         })
       }
     }
+
+    // Distribuer l'XP aux Pokémon de l'équipe
+    const session = this.sessions.get(player_id)
+    if (session && xp > 0) {
+      await this.distributeXpToTeam(player_id, xp, session)
+    }
+  }
+
+  // ─── XP + montée de niveau des Pokémon ───────────────────────────────────
+
+  /**
+   * XP total requis pour atteindre un niveau donné (croissance cubique modérée).
+   */
+  private xpForLevel(level: number): number {
+    if (level <= 1) return 0
+    return Math.floor(Math.pow(level, 3) * 0.8)
+  }
+
+  /**
+   * XP nécessaire pour passer du niveau `level` au niveau `level + 1`.
+   */
+  private xpToNextLevel(level: number): number {
+    return this.xpForLevel(level + 1) - this.xpForLevel(level)
+  }
+
+  /**
+   * Distribue l'XP de bataille à tous les Pokémon vivants de l'équipe.
+   * Applique les montées de niveau en cascade jusqu'au niveau 100.
+   */
+  private async distributeXpToTeam(
+    player_id: string,
+    xp_total: number,
+    session: CombatSession
+  ): Promise<void> {
+    const team = await db
+      .from('player_pokemon')
+      .where('player_id', player_id)
+      .whereNotNull('slot_team')
+      .where('level', '<', 100)
+      .select('id', 'level', 'xp', 'species_id')
+
+    if (team.length === 0) return
+
+    const xp_per_pokemon = Math.max(1, Math.floor(xp_total / team.length))
+
+    for (const pokemon of team) {
+      let level = Number(pokemon.level)
+      let current_xp = Number(pokemon.xp ?? 0) + xp_per_pokemon
+
+      // Montées de niveau en cascade
+      const level_ups: number[] = []
+      while (level < 100 && current_xp >= this.xpToNextLevel(level)) {
+        current_xp -= this.xpToNextLevel(level)
+        level++
+        level_ups.push(level)
+      }
+      current_xp = Math.max(0, current_xp)
+
+      await db
+        .from('player_pokemon')
+        .where('id', pokemon.id)
+        .update({ level, xp: current_xp })
+
+      if (level_ups.length > 0) {
+        await this.learnMovesOnLevelUp(pokemon.id, pokemon.species_id, level_ups)
+
+        session.io.to(session.socket_room).emit('combat:level_up', {
+          pokemon_id: pokemon.id,
+          new_level: level_ups[level_ups.length - 1],
+          levels_gained: level_ups.length,
+        })
+      }
+    }
+  }
+
+  /**
+   * Auto-apprend les moves débloqués lors de la montée de niveau
+   * si le Pokémon a encore des slots libres (< 4 moves).
+   */
+  private async learnMovesOnLevelUp(
+    pokemon_id: string,
+    species_id: number,
+    new_levels: number[]
+  ): Promise<void> {
+    const current_moves = await db
+      .from('player_pokemon_moves')
+      .where('player_pokemon_id', pokemon_id)
+      .select('move_id', 'slot')
+
+    if (current_moves.length >= 4) return
+
+    const learnable = await db
+      .from('pokemon_learnset')
+      .whereIn('level_learned_at', new_levels)
+      .where('species_id', species_id)
+      .where('learn_method', 'level-up')
+      .join('moves', 'moves.id', 'pokemon_learnset.move_id')
+      .select('pokemon_learnset.move_id', 'moves.pp as pp')
+
+    const existing_ids = new Set(current_moves.map((m: any) => Number(m.move_id)))
+    let next_slot = current_moves.length + 1
+
+    for (const move of learnable) {
+      if (next_slot > 4) break
+      if (existing_ids.has(Number(move.move_id))) continue
+
+      await db.table('player_pokemon_moves').insert({
+        id: crypto.randomUUID(),
+        player_pokemon_id: pokemon_id,
+        slot: next_slot,
+        move_id: move.move_id,
+        pp_current: move.pp ?? 10,
+        pp_max: move.pp ?? 10,
+      })
+      existing_ids.add(Number(move.move_id))
+      next_slot++
+    }
   }
 
   // ─── Récompenses boss ────────────────────────────────────────────────────

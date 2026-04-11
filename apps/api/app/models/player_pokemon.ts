@@ -25,6 +25,9 @@ export default class PlayerPokemon extends BaseModel {
   declare level: number
 
   @column()
+  declare xp: number
+
+  @column()
   declare isShiny: boolean
 
   @column()
