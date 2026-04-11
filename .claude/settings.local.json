@@ -127,7 +127,16 @@
       "Bash(sed -n '1,33p' /home/ash/pokegrind/apps/web/pages/jeu/battle-frontier/classement.vue)",
       "Bash(sed -n '1,26p' /home/ash/pokegrind/apps/web/pages/jeu/profil.vue)",
       "Bash(sed -n '1,83p' /home/ash/pokegrind/apps/web/pages/jeu/parametres.vue)",
-      "Bash(pnpm --filter web add canvas-confetti)"
+      "Bash(pnpm --filter web add canvas-confetti)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(pnpm --filter api build)",
+      "Bash(pnpm --filter admin build)",
+      "Bash(pnpm --filter web build)",
+      "Bash(find:*)",
+      "Bash(docker compose:*)",
+      "Bash(bash scripts/deploy.sh)"
     ]
   }
 }
