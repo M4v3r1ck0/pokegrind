@@ -24,7 +24,8 @@ export function useSprite() {
     staticUrl?: string | null,
     shinyUrl?: string | null
   ): string {
-    if (animated.value && !isShiny) {
+    // GIF animé Gen 5 uniquement disponible pour Gen 1-5 (IDs 1-649)
+    if (animated.value && !isShiny && speciesId >= 1 && speciesId <= 649) {
       return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${speciesId}.gif`
     }
     if (isShiny && shinyUrl) return shinyUrl
@@ -32,5 +33,10 @@ export function useSprite() {
     return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${speciesId}.png`
   }
 
-  return { animated, toggle, getSpriteUrl }
+  function getFallbackUrl(speciesId: number, isShiny = false, staticUrl?: string | null): string {
+    if (staticUrl) return staticUrl
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${isShiny ? 'shiny/' : ''}${speciesId}.png`
+  }
+
+  return { animated, toggle, getSpriteUrl, getFallbackUrl }
 }

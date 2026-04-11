@@ -59,6 +59,28 @@ function fallbackSprite(event: Event) {
   img.src = `https://play.pokemonshowdown.com/sprites/gen5/${alt}.png`
 }
 
+// Best pull = rareté la plus haute du dernier batch
+const RARITY_ORDER: Record<string, number> = {
+  common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4,
+}
+
+const bestPull = computed(() => {
+  if (gacha.lastResults.length === 0 || revealing.value) return null
+  const sorted = [...gacha.lastResults].sort((a, b) =>
+    (RARITY_ORDER[b.pokemon.rarity] ?? 0) - (RARITY_ORDER[a.pokemon.rarity] ?? 0)
+  )
+  return sorted[0] ?? null
+})
+
+const raritySummary = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const r of gacha.lastResults) {
+    counts[r.pokemon.rarity] = (counts[r.pokemon.rarity] ?? 0) + 1
+  }
+  return Object.entries(counts)
+    .sort(([a], [b]) => (RARITY_ORDER[b] ?? 0) - (RARITY_ORDER[a] ?? 0))
+})
+
 function rarityGlow(rarity: string): string {
   return {
     common:    '0 0 8px rgba(168,181,194,0.3)',
@@ -223,8 +245,57 @@ function rarityGlow(rarity: string): string {
           <p class="empty-label">Effectuez un tirage pour voir les résultats</p>
         </div>
 
-        <!-- Results grid -->
-        <div v-else class="results-grid">
+        <!-- Results wrapper -->
+        <div v-else class="results-wrapper">
+
+          <!-- Best pull showcase (après révélation complète) -->
+          <div v-if="bestPull" class="results-section">
+            <div class="best-pull-showcase">
+              <div class="best-pull-label">✨ Meilleur tirage</div>
+              <div
+                class="best-pull-card"
+                :class="[`rarity-${bestPull.pokemon.rarity}`]"
+                :style="{
+                  borderColor: RARITY_COLORS[bestPull.pokemon.rarity],
+                  boxShadow: rarityGlow(bestPull.pokemon.rarity),
+                }"
+              >
+                <div class="best-pull-badges">
+                  <span v-if="bestPull.pokemon.is_shiny" class="badge-shiny">✨ Shiny</span>
+                  <span v-if="bestPull.is_new_species" class="badge-new">NEW</span>
+                </div>
+                <img
+                  :src="bestPull.pokemon.is_shiny && bestPull.pokemon.sprite_shiny_url
+                    ? bestPull.pokemon.sprite_shiny_url
+                    : bestPull.pokemon.sprite_url || ''"
+                  :alt="bestPull.pokemon.name_fr"
+                  class="best-pull-sprite"
+                  :class="{ 'sprite-shiny': bestPull.pokemon.is_shiny }"
+                  @error="fallbackSprite"
+                />
+                <div class="best-pull-name">{{ bestPull.pokemon.name_fr }}</div>
+                <div class="best-pull-rarity" :style="{ color: RARITY_COLORS[bestPull.pokemon.rarity] }">
+                  {{ RARITY_LABELS[bestPull.pokemon.rarity] }}
+                </div>
+                <div class="best-pull-nature">{{ bestPull.pokemon.nature }}</div>
+              </div>
+            </div>
+            <!-- Rarity summary chips -->
+            <div class="rarity-summary">
+              <div
+                v-for="[rarity, count] in raritySummary"
+                :key="rarity"
+                class="rarity-chip"
+                :style="{ borderColor: RARITY_COLORS[rarity], color: RARITY_COLORS[rarity] }"
+              >
+                <span class="rarity-chip-count">{{ count }}×</span>
+                <span class="rarity-chip-label">{{ RARITY_LABELS[rarity] }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results grid (visible pendant ET après la révélation) -->
+          <div class="results-grid">
           <TransitionGroup name="card-reveal">
             <div
               v-for="(result, idx) in gacha.lastResults"
@@ -271,7 +342,9 @@ function rarityGlow(rarity: string): string {
               </template>
             </div>
           </TransitionGroup>
-        </div>
+          </div><!-- /results-grid -->
+
+        </div><!-- /results-wrapper -->
 
       </section>
     </div>
@@ -458,6 +531,105 @@ function rarityGlow(rarity: string): string {
   flex-direction: column;
   justify-content: flex-start;
 }
+
+.results-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Results section (best pull + summary) */
+.results-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Best pull showcase */
+.best-pull-showcase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.best-pull-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.best-pull-card {
+  position: relative;
+  background: var(--color-bg-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  animation: scale-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-width: 160px;
+}
+
+.best-pull-badges {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.best-pull-sprite {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.best-pull-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+}
+
+.best-pull-rarity {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.best-pull-nature {
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+}
+
+/* Rarity summary chips */
+.rarity-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+.rarity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid;
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  background: rgba(255,255,255,0.04);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.rarity-chip-count { opacity: 0.9; }
+.rarity-chip-label { opacity: 0.75; font-size: 0.7rem; }
 
 /* Pulling state */
 .pulling-state {

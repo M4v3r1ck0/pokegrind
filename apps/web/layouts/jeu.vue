@@ -8,21 +8,15 @@ const router = useRouter()
 
 const mobileMenuOpen = ref(false)
 
-// Restaurer la session après un F5 : si le token est en localStorage mais
-// que le profil joueur n'est pas encore chargé, on appelle /auth/me.
 onMounted(async () => {
   if (auth.accessToken && !auth.player) {
     try {
       await auth.fetchMe()
-      // fetchMe() gère le refresh automatiquement — si on arrive ici, c'est OK
     } catch (err: any) {
-      // Seulement déconnecter si la session est vraiment expirée
-      // (refresh token invalide ou absent)
       if (err?.message === 'SESSION_EXPIRED' || !auth.accessToken) {
         auth.clearSession()
         await router.push('/auth/login')
       }
-      // Sinon : erreur réseau ou autre → ne pas déconnecter, laisser l'utilisateur
     }
   }
 })
@@ -31,7 +25,6 @@ interface NavItem {
   label: string
   icon: string
   to: string
-  badge?: string | number
   accent?: string
 }
 
@@ -51,11 +44,6 @@ const navItems: NavItem[] = [
   { label: 'Boutique',     icon: '💎',  to: '/jeu/boutique',         accent: 'purple' },
 ]
 
-const secondaryItems: NavItem[] = [
-  { label: 'Profil',       icon: '👤',  to: '/jeu/profil' },
-  { label: 'Paramètres',   icon: '⚙️',  to: '/jeu/parametres' },
-]
-
 function isActive(to: string) {
   return route.path === to || route.path.startsWith(to + '/')
 }
@@ -70,85 +58,98 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
 
 <template>
   <div class="game-layout">
-    <!-- Header -->
-    <header class="game-header">
-      <div class="header-inner">
-        <!-- Logo -->
-        <NuxtLink to="/jeu" class="header-logo">
-          <span class="logo-icon">⚡</span>
-          <span class="logo-text font-display">PokeGrind</span>
-        </NuxtLink>
 
-        <!-- Center nav (desktop) -->
-        <nav class="header-nav" aria-label="Navigation principale">
+    <!-- ── Sidebar (desktop) ───────────────────────────────────────── -->
+    <aside class="sidebar">
+      <!-- Logo -->
+      <NuxtLink to="/jeu" class="sidebar-logo">
+        <span class="sidebar-logo-icon">⚡</span>
+        <span class="sidebar-logo-text font-display">PokeGrind</span>
+      </NuxtLink>
+
+      <!-- Main nav -->
+      <nav class="sidebar-nav">
+        <NuxtLink
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          class="sidebar-item"
+          :class="[`accent-${item.accent}`, { active: isActive(item.to) }]"
+        >
+          <span class="sidebar-active-bar" />
+          <span class="sidebar-icon">{{ item.icon }}</span>
+          <span class="sidebar-label">{{ item.label }}</span>
+        </NuxtLink>
+      </nav>
+
+      <!-- Footer: profile + resources -->
+      <div class="sidebar-footer">
+        <div class="sidebar-resources">
+          <div v-if="auth.player" class="resource-row">
+            <span>💰</span>
+            <span class="resource-val resource-gold">{{ Number(auth.player.gold).toLocaleString('fr') }}</span>
+          </div>
+          <div v-if="auth.player" class="resource-row">
+            <span>💎</span>
+            <span class="resource-val resource-gems">{{ auth.player.gems.toLocaleString('fr') }}</span>
+          </div>
+        </div>
+        <div class="sidebar-user">
+          <NuxtLink v-if="auth.player" to="/jeu/profil" class="sidebar-avatar" :title="auth.player.username">
+            {{ auth.player.username.charAt(0).toUpperCase() }}
+          </NuxtLink>
+          <div v-if="auth.player" class="sidebar-user-info">
+            <span class="sidebar-username">{{ auth.player.username }}</span>
+          </div>
+          <button class="sidebar-logout" title="Déconnexion" @click="logout">🚪</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Mobile header ────────────────────────────────────────────── -->
+    <header class="mobile-header">
+      <NuxtLink to="/jeu" class="mobile-logo">
+        <span>⚡</span>
+        <span class="font-display mobile-logo-text">PokeGrind</span>
+      </NuxtLink>
+      <div class="mobile-header-right">
+        <UiGemCounter v-if="auth.player" :amount="auth.player.gems" :animate="true" size="sm" />
+        <button class="mobile-toggle" :aria-expanded="mobileMenuOpen" @click="mobileMenuOpen = !mobileMenuOpen">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+            <rect v-if="!mobileMenuOpen" x="2" y="5" width="18" height="2.5" rx="1.25" fill="currentColor"/>
+            <rect v-if="!mobileMenuOpen" x="2" y="10" width="18" height="2.5" rx="1.25" fill="currentColor"/>
+            <rect v-if="!mobileMenuOpen" x="2" y="15" width="18" height="2.5" rx="1.25" fill="currentColor"/>
+            <line v-if="mobileMenuOpen" x1="4" y1="4" x2="18" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <line v-if="mobileMenuOpen" x1="18" y1="4" x2="4" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile drawer -->
+    <Transition name="drawer">
+      <nav v-if="mobileMenuOpen" class="mobile-drawer">
+        <div class="mobile-drawer-grid">
           <NuxtLink
             v-for="item in navItems"
             :key="item.to"
             :to="item.to"
-            class="nav-link"
-            :class="[`accent-${item.accent}`, { active: isActive(item.to) }]"
+            class="mobile-drawer-item"
+            :class="{ active: isActive(item.to) }"
           >
-            <span class="nav-icon">{{ item.icon }}</span>
-            <span class="nav-label">{{ item.label }}</span>
+            <span class="mobile-drawer-icon">{{ item.icon }}</span>
+            <span class="mobile-drawer-label">{{ item.label }}</span>
           </NuxtLink>
-        </nav>
-
-        <!-- Right zone -->
-        <div class="header-right">
-          <!-- Gem counter -->
-          <UiGemCounter v-if="auth.player" :amount="auth.player.gems" :animate="true" size="sm" />
-
-          <!-- Gold -->
-          <div v-if="auth.player" class="gold-counter">
-            <span>💰</span>
-            <span class="gold-amount">{{ Number(auth.player.gold).toLocaleString('fr') }}</span>
-          </div>
-
-          <!-- Profile -->
-          <NuxtLink v-if="auth.player" to="/jeu/profil" class="player-avatar" :title="auth.player.username">
-            {{ auth.player.username.charAt(0).toUpperCase() }}
-          </NuxtLink>
-
-          <!-- Mobile toggle -->
-          <button class="mobile-toggle" :aria-expanded="mobileMenuOpen" @click="mobileMenuOpen = !mobileMenuOpen">
-            <span class="sr-only">Menu</span>
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-              <rect v-if="!mobileMenuOpen" x="2" y="5" width="18" height="2.5" rx="1.25" fill="currentColor"/>
-              <rect v-if="!mobileMenuOpen" x="2" y="10" width="18" height="2.5" rx="1.25" fill="currentColor"/>
-              <rect v-if="!mobileMenuOpen" x="2" y="15" width="18" height="2.5" rx="1.25" fill="currentColor"/>
-              <line v-if="mobileMenuOpen" x1="4" y1="4" x2="18" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-              <line v-if="mobileMenuOpen" x1="18" y1="4" x2="4" y2="18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-            </svg>
-          </button>
         </div>
-      </div>
+        <div class="mobile-drawer-footer">
+          <NuxtLink to="/jeu/profil" class="mobile-secondary-link">👤 Profil</NuxtLink>
+          <NuxtLink to="/jeu/parametres" class="mobile-secondary-link">⚙️ Paramètres</NuxtLink>
+          <button class="mobile-logout" @click="logout">🚪 Déconnexion</button>
+        </div>
+      </nav>
+    </Transition>
 
-      <!-- Mobile menu drawer -->
-      <Transition name="drawer">
-        <nav v-if="mobileMenuOpen" class="mobile-nav" aria-label="Navigation mobile">
-          <div class="mobile-nav-grid">
-            <NuxtLink
-              v-for="item in navItems"
-              :key="item.to"
-              :to="item.to"
-              class="mobile-nav-link"
-              :class="{ active: isActive(item.to) }"
-            >
-              <span class="mobile-nav-icon">{{ item.icon }}</span>
-              <span class="mobile-nav-label">{{ item.label }}</span>
-            </NuxtLink>
-          </div>
-          <div class="mobile-nav-footer">
-            <NuxtLink v-for="item in secondaryItems" :key="item.to" :to="item.to" class="mobile-secondary-link">
-              {{ item.icon }} {{ item.label }}
-            </NuxtLink>
-            <button class="mobile-logout" @click="logout">🚪 Déconnexion</button>
-          </div>
-        </nav>
-      </Transition>
-    </header>
-
-    <!-- Page content -->
+    <!-- ── Page content ──────────────────────────────────────────────── -->
     <main class="game-main">
       <slot />
     </main>
@@ -156,7 +157,7 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
     <!-- Toast notifications -->
     <UiToast />
 
-    <!-- Bottom navigation (mobile ≤640px) -->
+    <!-- ── Bottom navigation (mobile ≤860px) ──────────────────────── -->
     <nav class="bottom-nav" aria-label="Navigation rapide mobile">
       <NuxtLink to="/jeu/combat"  class="bottom-nav-item" :class="{ active: isActive('/jeu/combat') }">
         <span>⚔️</span><span>Combat</span>
@@ -178,159 +179,273 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
 </template>
 
 <style scoped>
+/* ─── Root layout ─────────────────────────────────────────────────── */
 .game-layout {
   display: flex;
-  flex-direction: column;
   min-height: 100dvh;
-  background: radial-gradient(ellipse at 50% 0%, rgba(156,106,222,0.08) 0%, transparent 60%), var(--color-bg-primary);
+  background: radial-gradient(ellipse at 60% 0%, rgba(156,106,222,0.06) 0%, transparent 55%), var(--color-bg-primary);
 }
 
-/* ─── Header ─────────────────────────────────────────────────────── */
-.game-header {
-  position: sticky;
-  top: 0;
-  z-index: var(--z-sticky);
-  background: rgba(26,28,46,0.92);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-}
-
-.header-inner {
+/* ─── Sidebar ─────────────────────────────────────────────────────── */
+.sidebar {
+  width: 200px;
+  min-width: 200px;
+  background: #0f1117;
+  border-right: 1px solid rgba(255,255,255,0.06);
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: 0 var(--space-4);
-  height: 56px;
-  max-width: 1600px;
-  margin: 0 auto;
-  width: 100%;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: var(--z-sticky);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.08) transparent;
 }
 
 /* Logo */
-.header-logo {
+.sidebar-logo {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 8px;
+  padding: 20px 16px 16px;
   text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   flex-shrink: 0;
 }
 
-.logo-icon {
-  font-size: 1.4rem;
-  filter: drop-shadow(0 0 8px rgba(255,215,0,0.8));
+.sidebar-logo-icon {
+  font-size: 1.3rem;
+  filter: drop-shadow(0 0 8px rgba(255,215,0,0.7));
 }
 
-.logo-text {
-  font-size: 1.4rem;
+.sidebar-logo-text {
+  font-size: 1.25rem;
   letter-spacing: 0.06em;
   background: linear-gradient(135deg, #ffd700, #ffb300);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  white-space: nowrap;
 }
 
-/* Desktop nav */
-.header-nav {
+/* Nav */
+.sidebar-nav {
   display: flex;
-  align-items: center;
-  gap: 2px;
+  flex-direction: column;
+  padding: 8px 0;
   flex: 1;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding: 0 var(--space-2);
 }
-.header-nav::-webkit-scrollbar { display: none; }
 
-.nav-link {
+.sidebar-item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
+  gap: 10px;
+  padding: 9px 16px 9px 20px;
   text-decoration: none;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--color-text-muted);
-  white-space: nowrap;
   transition: var(--transition-fast);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.sidebar-item:hover {
+  color: var(--color-text-primary);
+  background: rgba(255,255,255,0.04);
+}
+
+.sidebar-item.active {
+  color: var(--color-text-primary);
+  background: rgba(156,106,222,0.15);
+}
+
+/* Accent active colors */
+.sidebar-item.active.accent-red    { background: rgba(230,57,70,0.12);   color: #ff6b7a; }
+.sidebar-item.active.accent-green  { background: rgba(86,201,109,0.12);  color: #56c96d; }
+.sidebar-item.active.accent-purple { background: rgba(156,106,222,0.15); color: #b894f5; }
+.sidebar-item.active.accent-blue   { background: rgba(79,195,247,0.12);  color: #4fc3f7; }
+.sidebar-item.active.accent-yellow { background: rgba(255,215,0,0.10);   color: #ffd700; }
+.sidebar-item.active.accent-gold   { background: rgba(255,215,0,0.12);   color: #ffd700; }
+
+/* Barre violette à gauche sur l'item actif */
+.sidebar-active-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  border-radius: 0 2px 2px 0;
+  transition: var(--transition-fast);
+}
+
+.sidebar-item.active .sidebar-active-bar {
+  background: var(--color-accent-purple);
+}
+.sidebar-item.active.accent-red    .sidebar-active-bar { background: var(--color-accent-red); }
+.sidebar-item.active.accent-green  .sidebar-active-bar { background: var(--type-grass); }
+.sidebar-item.active.accent-blue   .sidebar-active-bar { background: var(--color-accent-blue); }
+.sidebar-item.active.accent-yellow .sidebar-active-bar,
+.sidebar-item.active.accent-gold   .sidebar-active-bar { background: var(--color-accent-yellow); }
+
+.sidebar-icon  { font-size: 1rem; line-height: 1; flex-shrink: 0; }
+.sidebar-label { line-height: 1; white-space: nowrap; }
+
+/* Footer */
+.sidebar-footer {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 12px 0 8px;
   flex-shrink: 0;
 }
-.nav-link:hover { color: var(--color-text-primary); background: rgba(255,255,255,0.06); }
-.nav-link.active { color: var(--color-text-primary); background: rgba(156,106,222,0.15); }
 
-.nav-icon  { font-size: 0.9rem; line-height: 1; }
-.nav-label { line-height: 1; }
+.sidebar-resources {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 16px 10px;
+}
 
-/* Accent active states */
-.nav-link.active.accent-red    { background: rgba(230,57,70,0.15);   color: #ff6b7a; }
-.nav-link.active.accent-green  { background: rgba(86,201,109,0.15);  color: #56c96d; }
-.nav-link.active.accent-purple { background: rgba(156,106,222,0.2);  color: #b894f5; }
-.nav-link.active.accent-blue   { background: rgba(79,195,247,0.15);  color: #4fc3f7; }
-.nav-link.active.accent-yellow { background: rgba(255,215,0,0.12);   color: #ffd700; }
-.nav-link.active.accent-gold   { background: rgba(255,215,0,0.15);   color: #ffd700; }
-
-/* Right zone */
-.header-right {
+.resource-row {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  flex-shrink: 0;
+  gap: 6px;
+  font-size: 0.78rem;
 }
 
-.gold-counter {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.85rem;
+.resource-val {
   font-weight: 700;
-  color: var(--color-accent-yellow);
+  font-variant-numeric: tabular-nums;
 }
-.gold-amount { font-variant-numeric: tabular-nums; }
 
-.player-avatar {
-  width: 32px;
-  height: 32px;
+.resource-gold  { color: var(--color-accent-yellow); }
+.resource-gems  { color: var(--color-accent-blue); }
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 4px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.sidebar-avatar {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: linear-gradient(135deg, #4a0e8f, #9c6ade);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: #fff;
   text-decoration: none;
   flex-shrink: 0;
   transition: var(--transition-fast);
 }
-.player-avatar:hover { transform: scale(1.1); box-shadow: var(--shadow-glow-purple); }
+.sidebar-avatar:hover { transform: scale(1.1); }
+
+.sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-username {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.sidebar-logout {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  opacity: 0.5;
+  transition: var(--transition-fast);
+}
+.sidebar-logout:hover { opacity: 1; background: rgba(230,57,70,0.15); }
+
+/* ─── Mobile header (hidden on desktop) ──────────────────────────── */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: calc(var(--z-sticky) + 1);
+  background: rgba(15,17,23,0.97);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  height: 52px;
+  padding: 0 var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.mobile-logo-text {
+  font-size: 1.15rem;
+  background: linear-gradient(135deg, #ffd700, #ffb300);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.mobile-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
 
 .mobile-toggle {
-  display: none;
   background: rgba(156,106,222,0.15);
   border: 1px solid rgba(156,106,222,0.3);
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
   cursor: pointer;
-  padding: 6px 8px;
+  padding: 5px 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: var(--transition-fast);
 }
 .mobile-toggle:hover { background: rgba(156,106,222,0.3); }
 
-/* ─── Mobile menu ─────────────────────────────────────────────────── */
-.mobile-nav {
-  border-top: 1px solid rgba(255,255,255,0.07);
-  background: rgba(26,28,46,0.98);
+/* Mobile drawer */
+.mobile-drawer {
+  position: fixed;
+  top: 52px;
+  left: 0;
+  right: 0;
+  z-index: var(--z-sticky);
+  background: rgba(15,17,23,0.98);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
   padding: var(--space-4);
 }
 
-.mobile-nav-grid {
+.mobile-drawer-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-2);
 }
 
-.mobile-nav-link {
+.mobile-drawer-item {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -339,19 +454,21 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
   border-radius: var(--radius-lg);
   text-decoration: none;
   color: var(--color-text-muted);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.03);
   transition: var(--transition-fast);
 }
-.mobile-nav-link:hover, .mobile-nav-link.active {
+.mobile-drawer-item:hover,
+.mobile-drawer-item.active {
   background: rgba(156,106,222,0.15);
   color: var(--color-text-primary);
 }
 
-.mobile-nav-icon { font-size: 1.3rem; line-height: 1; }
+.mobile-drawer-icon  { font-size: 1.2rem; line-height: 1; }
+.mobile-drawer-label { line-height: 1; }
 
-.mobile-nav-footer {
+.mobile-drawer-footer {
   display: flex;
   gap: var(--space-3);
   align-items: center;
@@ -385,13 +502,14 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
 }
 .mobile-logout:hover { color: var(--color-accent-red); background: rgba(230,57,70,0.1); }
 
-/* ─── Main ─────────────────────────────────────────────────────────── */
+/* ─── Main content ────────────────────────────────────────────────── */
 .game-main {
   flex: 1;
-  padding: var(--space-6) var(--space-4);
-  max-width: 1600px;
-  margin: 0 auto;
-  width: 100%;
+  margin-left: 200px;
+  padding: var(--space-6) var(--space-5);
+  min-height: 100dvh;
+  width: 0; /* flex child — let flex handle width */
+  min-width: 0;
 }
 
 /* Drawer transition */
@@ -399,7 +517,7 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
 .drawer-leave-active { transition: all 0.15s ease; }
 .drawer-enter-from, .drawer-leave-to { opacity: 0; transform: translateY(-8px); }
 
-/* ─── Bottom nav (mobile) ──────────────────────────────────────────── */
+/* ─── Bottom nav (mobile only) ────────────────────────────────────── */
 .bottom-nav {
   display: none;
   position: fixed;
@@ -407,7 +525,7 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
   left: 0;
   right: 0;
   z-index: var(--z-sticky);
-  background: rgba(26,28,46,0.97);
+  background: rgba(15,17,23,0.97);
   backdrop-filter: blur(16px);
   border-top: 1px solid rgba(255,255,255,0.08);
   padding: 6px 0 max(6px, env(safe-area-inset-bottom));
@@ -432,26 +550,21 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
 
 /* ─── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 860px) {
-  .header-nav { display: none; }
-  .mobile-toggle { display: flex; }
-  .gold-counter { display: none; }
-}
-
-@media (max-width: 640px) {
-  .game-main { padding: var(--space-4) var(--space-3) calc(var(--space-6) + 60px); }
-  .mobile-nav-grid { grid-template-columns: repeat(3, 1fr); }
+  .sidebar       { display: none; }
+  .mobile-header { display: flex; }
+  .game-main {
+    margin-left: 0;
+    padding: calc(52px + var(--space-4)) var(--space-3) calc(var(--space-6) + 60px);
+  }
   .bottom-nav { display: flex; }
 }
 
-@media (max-width: 375px) {
-  .game-main { padding: var(--space-3) var(--space-2); }
-  .mobile-nav-grid { grid-template-columns: repeat(2, 1fr); }
-  .header-inner { padding: 0 var(--space-3); }
+@media (max-width: 480px) {
+  .mobile-drawer-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-.sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0;
-  margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
-  white-space: nowrap; border: 0;
+@media (max-width: 375px) {
+  .game-main { padding-left: var(--space-2); padding-right: var(--space-2); }
+  .mobile-drawer-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
