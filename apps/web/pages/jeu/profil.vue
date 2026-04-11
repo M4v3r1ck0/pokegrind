@@ -3,12 +3,14 @@ import { onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 import { useOfflineStore } from '~/stores/offline'
 import { usePrestigeStore } from '~/stores/prestige'
+import { useSprite } from '~/composables/useSprite'
 
 definePageMeta({ middleware: 'auth', layout: 'jeu' })
 
 const auth = useAuthStore()
 const offlineStore = useOfflineStore()
 const prestige = usePrestigeStore()
+const sprite = useSprite()
 
 onMounted(() => {
   offlineStore.fetchHistory()
@@ -118,6 +120,25 @@ function formatNum(n: number | undefined | null): string {
             <span v-if="report.hatches > 0" class="gain-chip hatch-chip">{{ report.hatches }} éclosion{{ report.hatches > 1 ? 's' : '' }}</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ── Préférences ──────────────────────────────────────── -->
+    <div class="prefs-section">
+      <h2 class="font-display section-title">Préférences</h2>
+      <div class="pref-row">
+        <div class="pref-info">
+          <span class="pref-label">Sprites animés</span>
+          <span class="pref-desc">Affiche les GIFs animés Gen 5 (peut impacter les performances)</span>
+        </div>
+        <button
+          class="toggle-btn"
+          :class="{ active: sprite.animated.value }"
+          :title="sprite.animated.value ? 'Désactiver les sprites animés' : 'Activer les sprites animés'"
+          @click="sprite.toggle()"
+        >
+          <span class="toggle-knob" />
+        </button>
       </div>
     </div>
 
@@ -248,6 +269,47 @@ function formatNum(n: number | undefined | null): string {
 }
 .gold-chip-sm { background: rgba(255,215,0,0.1); color: var(--color-accent-yellow); }
 .hatch-chip   { background: rgba(255,107,157,0.1); color: var(--color-rarity-mythic); }
+
+/* Prefs */
+.prefs-section { display: flex; flex-direction: column; gap: var(--space-3); }
+.pref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+.pref-info   { display: flex; flex-direction: column; gap: 3px; }
+.pref-label  { font-size: 0.9rem; font-weight: 700; color: var(--color-text-primary); }
+.pref-desc   { font-size: 0.75rem; color: var(--color-text-muted); }
+
+.toggle-btn {
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+  border: none;
+  cursor: pointer;
+  background: rgba(255,255,255,0.15);
+  position: relative;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+.toggle-btn.active { background: #9c6ade; }
+.toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+  display: block;
+}
+.toggle-btn.active .toggle-knob { transform: translateX(22px); }
 
 /* Quick links */
 .quick-links { display: flex; gap: var(--space-3); flex-wrap: wrap; }

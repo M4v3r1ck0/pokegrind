@@ -3,12 +3,14 @@ import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 import { useNuxtApp } from '#app'
 import { useCombatStore } from '~/stores/combat'
 import { useAuthStore } from '~/stores/auth'
+import { useSprite } from '~/composables/useSprite'
 
 definePageMeta({ middleware: 'auth', layout: 'jeu' })
 
 const combat = useCombatStore()
 const auth = useAuthStore()
 const nuxtApp = useNuxtApp()
+const sprite = useSprite()
 
 const showFloorModal = ref(false)
 const availableFloors = ref<any[]>([])
@@ -75,6 +77,13 @@ async function changeFloor(floor_number: number) {
 function onSpriteError(e: Event, pokemon: any) {
   const img = e.target as HTMLImageElement
   if (pokemon.sprite_fallback_url) img.src = pokemon.sprite_fallback_url
+}
+
+function playerSpriteUrl(pokemon: any): string {
+  if (pokemon.species_id) {
+    return sprite.getSpriteUrl(pokemon.species_id, pokemon.is_shiny ?? false, pokemon.sprite_url, pokemon.sprite_shiny_url)
+  }
+  return pokemon.sprite_url ?? ''
 }
 
 function formatTimer(ms: number): string {
@@ -174,8 +183,8 @@ function formatTimer(ms: number): string {
             :class="{ ko: pokemon.current_hp <= 0 }"
           >
             <img
-              v-if="pokemon.sprite_url"
-              :src="pokemon.sprite_url"
+              v-if="pokemon.sprite_url || pokemon.species_id"
+              :src="playerSpriteUrl(pokemon)"
               :alt="pokemon.name_fr"
               class="poke-sprite poke-sprite-player"
               @error="(e: Event) => onSpriteError(e, pokemon)"

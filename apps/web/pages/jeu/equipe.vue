@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useTeamStore, type TeamPokemon, type AvailableMove } from '~/stores/team'
+import { useSprite } from '~/composables/useSprite'
 
 definePageMeta({ middleware: 'auth', layout: 'jeu' })
 
 const team = useTeamStore()
+const sprite = useSprite()
 
 // ─── État des modals ───────────────────────────────────────────────────────
 const selectedPokemon = ref<TeamPokemon | null>(null)
@@ -60,8 +62,12 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 function spriteUrl(p: TeamPokemon): string {
-  if (p.is_shiny && p.species.sprite_shiny_url) return p.species.sprite_shiny_url
-  return p.species.sprite_url ?? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.species_id}.png`
+  return sprite.getSpriteUrl(
+    p.species_id,
+    p.is_shiny,
+    p.species.sprite_url,
+    p.species.sprite_shiny_url
+  )
 }
 
 function onSpriteError(e: Event, p: TeamPokemon) {
