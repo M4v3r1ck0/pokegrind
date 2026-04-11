@@ -92,6 +92,10 @@ const pageTitle = computed(() => PAGE_TITLES[route.path] ?? 'PokeGrind')
       <header class="pg-topbar">
         <button v-if="showBack" class="btn-back" @click="router.back()">←</button>
         <span class="topbar-title">{{ pageTitle }}</span>
+        <div class="topbar-resources">
+          <span class="res-or">💰 {{ auth.player?.gold != null ? Number(auth.player.gold).toLocaleString('fr') : '—' }}</span>
+          <span class="res-gem">💎 {{ auth.player?.gems != null ? Number(auth.player.gems).toLocaleString('fr') : '—' }}</span>
+        </div>
         <div class="topbar-right">
           <span v-if="auth.player" class="player-chip">{{ auth.player.username }}</span>
         </div>
@@ -267,6 +271,14 @@ const pageTitle = computed(() => PAGE_TITLES[route.path] ?? 'PokeGrind')
 }
 .btn-back:hover { background: rgba(255,255,255,0.12); color: #fff; }
 .topbar-title { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.85); }
+.topbar-resources {
+  display: none;
+  gap: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.res-or  { color: #ffd700; }
+.res-gem { color: #a78bfa; }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .player-chip {
   font-size: 12px; font-weight: 700;
@@ -296,5 +308,6 @@ const pageTitle = computed(() => PAGE_TITLES[route.path] ?? 'PokeGrind')
 @media (max-width: 768px) {
   .pg-sidebar { display: none; }
   .pg-root { flex-direction: column; }
+  .topbar-resources { display: flex; }
 }
 </style>
