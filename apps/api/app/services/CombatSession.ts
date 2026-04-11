@@ -222,7 +222,7 @@ export default class CombatSession {
       base_spdef: def_base,
       base_speed: speed_base,
       moves: [this.buildBasicMove(type1, level)],
-      sprite_url: '',
+      sprite_url: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${(index % 151) + 1 + Math.floor(level / 10)}.png`,
       is_shiny: false,
       max_hp,
       current_hp: max_hp,
