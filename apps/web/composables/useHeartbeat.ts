@@ -13,7 +13,7 @@ export function useHeartbeat() {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
       try {
         const { $api } = useNuxtApp() as any
-        await $api.post('/api/player/heartbeat')
+        await $api.post('/player/heartbeat')
       } catch {
         // Ignorer silencieusement (offline, token expiré, etc.)
       }

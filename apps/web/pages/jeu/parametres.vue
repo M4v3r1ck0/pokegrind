@@ -43,7 +43,7 @@ onMounted(async () => {
   await checkSubscriptionStatus()
   if (isSubscribed.value) {
     try {
-      const { data } = await $api.get('/api/player/push/preferences')
+      const { data } = await $api.get('/player/push/preferences')
       if (data?.notification_prefs) {
         prefs.value = { ...prefs.value, ...data.notification_prefs }
       }
@@ -67,7 +67,7 @@ async function toggleNotifications() {
 async function savePrefs() {
   saving.value = true
   try {
-    await $api.put('/api/player/push/preferences', prefs.value)
+    await $api.put('/player/push/preferences', prefs.value)
     saved_msg.value = true
     setTimeout(() => { saved_msg.value = false }, 2500)
   } finally {

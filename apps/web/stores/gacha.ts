@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { useNuxtApp } from '#app'
 import { useAuthStore } from './auth'
 
 export interface GachaResultItem {
@@ -35,28 +35,18 @@ export const useGachaStore = defineStore('gacha', {
   }),
 
   actions: {
-    authHeaders() {
-      const auth = useAuthStore()
-      return auth.accessToken ? { Authorization: `Bearer ${auth.accessToken}` } : {}
-    },
-
     async fetchPity() {
-      const { data } = await axios.get('/api/gacha/pity', {
-        withCredentials: true,
-        headers: this.authHeaders(),
-      })
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.get('/gacha/pity')
       this.pity = data
       return data
     },
 
     async pull(count: 1 | 10) {
+      const api = (useNuxtApp() as any).$api
       this.isPulling = true
       try {
-        const { data } = await axios.post(
-          '/api/gacha/pull',
-          { count },
-          { withCredentials: true, headers: this.authHeaders() }
-        )
+        const { data } = await api.post('/gacha/pull', { count })
         this.lastResults = data.results
         if (this.pity && data.results.length > 0) {
           const last = data.results[data.results.length - 1]

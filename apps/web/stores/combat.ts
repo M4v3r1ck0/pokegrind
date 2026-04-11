@@ -250,7 +250,7 @@ export const useCombatStore = defineStore('combat', {
     async moveToFloor(floor_number: number) {
       const nuxtApp = useNuxtApp()
       const api = nuxtApp.$api as any
-      const { data } = await api.post('/api/combat/move-to-floor', { floor_number })
+      const { data } = await api.post('/combat/move-to-floor', { floor_number })
       this.applyFullState(data)
     },
   },

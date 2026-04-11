@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
 
 export interface Player {
   id: string
@@ -23,8 +22,11 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async login(email: string, password: string) {
-      const { data } = await axios.post('/api/auth/login', { email, password }, {
-        withCredentials: true,
+      const api = useApi()
+      const data = await api<{ access_token: string; player: Player }>('/auth/login', {
+        method: 'POST',
+        body: { email, password },
+        credentials: 'include',
       })
       this.accessToken = data.access_token
       this.player = data.player
@@ -33,12 +35,12 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async register(username: string, email: string, password: string, starterId: number) {
-      const { data } = await axios.post('/api/auth/register', {
-        username,
-        email,
-        password,
-        starter_id: starterId,
-      }, { withCredentials: true })
+      const api = useApi()
+      const data = await api<{ access_token: string; player: Player }>('/auth/register', {
+        method: 'POST',
+        body: { username, email, password, starter_id: starterId },
+        credentials: 'include',
+      })
       this.accessToken = data.access_token
       this.player = data.player
       this.isAuthenticated = true
@@ -46,13 +48,16 @@ export const useAuthStore = defineStore('auth', {
     },
 
     loginWithDiscord() {
-      window.location.href = '/api/auth/discord'
+      const { public: { apiBase } } = useRuntimeConfig()
+      window.location.href = `${apiBase}/auth/discord`
     },
 
     async logout() {
       try {
-        await axios.post('/api/auth/logout', {}, {
-          withCredentials: true,
+        const api = useApi()
+        await api('/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
           headers: this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {},
         })
       } catch {
@@ -62,8 +67,10 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async refreshToken() {
-      const { data } = await axios.post('/api/auth/refresh', {}, {
-        withCredentials: true,
+      const api = useApi()
+      const data = await api<{ access_token: string }>('/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
       })
       this.accessToken = data.access_token
       return data
@@ -71,8 +78,9 @@ export const useAuthStore = defineStore('auth', {
 
     async fetchMe() {
       if (!this.accessToken) return
-      const { data } = await axios.get('/api/auth/me', {
-        withCredentials: true,
+      const api = useApi()
+      const data = await api<Player>('/auth/me', {
+        credentials: 'include',
         headers: { Authorization: `Bearer ${this.accessToken}` },
       })
       this.player = data

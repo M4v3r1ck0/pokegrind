@@ -2,7 +2,7 @@
  * PrestigeStore — Gestion du système de prestige côté client.
  */
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { useNuxtApp } from '#app'
 
 export interface PrestigeMultipliers {
   gold: number
@@ -79,9 +79,10 @@ export const usePrestigeStore = defineStore('prestige', {
 
   actions: {
     async fetchPrestigeStatus() {
+      const api = (useNuxtApp() as any).$api
       this.is_loading = true
       try {
-        const { data } = await axios.get('/api/player/prestige')
+        const { data } = await api.get('/player/prestige')
         this.current_level = data.current_level
         this.current_name_fr = data.current_name_fr
         this.total_prestiges = data.total_prestiges
@@ -95,23 +96,27 @@ export const usePrestigeStore = defineStore('prestige', {
     },
 
     async fetchLevels() {
-      const { data } = await axios.get('/api/player/prestige/levels')
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.get('/player/prestige/levels')
       this.levels = data
     },
 
     async fetchHistory() {
-      const { data } = await axios.get('/api/player/prestige/history')
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.get('/player/prestige/history')
       this.history = data
     },
 
     async performPrestige(): Promise<any> {
-      const { data } = await axios.post('/api/player/prestige/perform')
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.post('/player/prestige/perform')
       await this.fetchPrestigeStatus()
       return data
     },
 
     async fetchLeaderboard() {
-      const { data } = await axios.get('/api/prestige/leaderboard')
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.get('/prestige/leaderboard')
       this.leaderboard = data
     },
 

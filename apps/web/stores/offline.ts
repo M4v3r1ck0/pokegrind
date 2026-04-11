@@ -33,7 +33,7 @@ export const useOfflineStore = defineStore('offline', {
     async checkPendingReport() {
       const nuxtApp = useNuxtApp()
       const api = nuxtApp.$api as any
-      const { data } = await api.get('/api/player/offline-report/pending')
+      const { data } = await api.get('/player/offline-report/pending')
       this.has_report = data.has_report
       this.pending_report = data.report ?? null
       if (this.has_report) this.show_modal = true
@@ -43,7 +43,7 @@ export const useOfflineStore = defineStore('offline', {
       if (!this.pending_report) return
       const nuxtApp = useNuxtApp()
       const api = nuxtApp.$api as any
-      await api.post('/api/player/offline-report/collect', { report_id: this.pending_report.id })
+      await api.post('/player/offline-report/collect', { report_id: this.pending_report.id })
       this.has_report = false
       this.pending_report = null
       this.show_modal = false
@@ -52,7 +52,7 @@ export const useOfflineStore = defineStore('offline', {
     async fetchHistory() {
       const nuxtApp = useNuxtApp()
       const api = nuxtApp.$api as any
-      const { data } = await api.get('/api/player/offline-reports')
+      const { data } = await api.get('/player/offline-reports')
       this.history = data.reports ?? []
       this.history_total = data.total ?? 0
     },

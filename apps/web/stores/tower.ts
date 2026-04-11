@@ -3,7 +3,7 @@
  */
 import { defineStore } from 'pinia'
 import { useSocket } from '~/composables/useSocket'
-import axios from 'axios'
+import { useNuxtApp } from '#app'
 
 export interface TowerStatus {
   active: boolean
@@ -117,7 +117,7 @@ export const useTowerStore = defineStore('tower', {
 
     async fetchStatus() {
       try {
-        const { data } = await axios.get('/api/tower/status')
+        const { data } = await (useNuxtApp() as any).$api.get('/tower/status')
         this.status = data
       } catch (err) {
         console.error('[TowerStore] fetchStatus error:', err)
@@ -127,9 +127,10 @@ export const useTowerStore = defineStore('tower', {
     // ── Combat ──────────────────────────────────────────────────────────────
 
     async startSession() {
+      const api = (useNuxtApp() as any).$api
       this.loading = true
       try {
-        const { data } = await axios.post('/api/tower/start')
+        const { data } = await api.post('/tower/start')
         this.snapshot = data.snapshot
         this.session_active = true
         this.combat_log = []
@@ -141,7 +142,7 @@ export const useTowerStore = defineStore('tower', {
 
     async stopSession() {
       try {
-        await axios.post('/api/tower/stop')
+        await (useNuxtApp() as any).$api.post('/tower/stop')
         this.session_active = false
         this.snapshot = null
       } catch (err) {
@@ -151,7 +152,7 @@ export const useTowerStore = defineStore('tower', {
 
     async abandonSession() {
       try {
-        await axios.post('/api/tower/abandon')
+        await (useNuxtApp() as any).$api.post('/tower/abandon')
         this.session_active = false
         this.snapshot = null
         if (this.status) this.status.current_floor = 1
@@ -162,7 +163,7 @@ export const useTowerStore = defineStore('tower', {
 
     async fetchState() {
       try {
-        const { data } = await axios.get('/api/tower/state')
+        const { data } = await (useNuxtApp() as any).$api.get('/tower/state')
         this.session_active = data.active
         if (data.snapshot) {
           this.snapshot = data.snapshot
@@ -177,7 +178,7 @@ export const useTowerStore = defineStore('tower', {
     async fetchMilestones() {
       if (this.milestones.length > 0) return
       try {
-        const { data } = await axios.get('/api/tower/milestones')
+        const { data } = await (useNuxtApp() as any).$api.get('/tower/milestones')
         this.milestones = data
       } catch (err) {
         console.error('[TowerStore] fetchMilestones error:', err)
@@ -187,7 +188,7 @@ export const useTowerStore = defineStore('tower', {
     async fetchBosses() {
       if (this.bosses.length > 0) return
       try {
-        const { data } = await axios.get('/api/tower/bosses')
+        const { data } = await (useNuxtApp() as any).$api.get('/tower/bosses')
         this.bosses = data
       } catch (err) {
         console.error('[TowerStore] fetchBosses error:', err)
@@ -196,7 +197,7 @@ export const useTowerStore = defineStore('tower', {
 
     async fetchLeaderboard() {
       try {
-        const { data } = await axios.get('/api/tower/leaderboard')
+        const { data } = await (useNuxtApp() as any).$api.get('/tower/leaderboard')
         this.leaderboard = data.leaderboard ?? []
       } catch (err) {
         console.error('[TowerStore] fetchLeaderboard error:', err)

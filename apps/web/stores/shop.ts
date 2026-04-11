@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { useNuxtApp } from '#app'
 import { useAuthStore } from './auth'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -43,18 +43,11 @@ export const useShopStore = defineStore('shop', {
   },
 
   actions: {
-    authHeaders() {
-      const auth = useAuthStore()
-      return auth.accessToken ? { Authorization: `Bearer ${auth.accessToken}` } : {}
-    },
-
     async fetchShopState() {
+      const api = (useNuxtApp() as any).$api
       this.is_loading = true
       try {
-        const { data } = await axios.get('/api/player/shop', {
-          withCredentials: true,
-          headers: this.authHeaders(),
-        })
+        const { data } = await api.get('/player/shop')
         this.upgrades = data.upgrades
         this.player_gems = data.player_gems
       } finally {
@@ -64,11 +57,8 @@ export const useShopStore = defineStore('shop', {
 
     async purchaseUpgrade(upgrade_id: number): Promise<{ success: boolean; error?: string }> {
       try {
-        const { data } = await axios.post(
-          '/api/player/shop/purchase',
-          { upgrade_id },
-          { withCredentials: true, headers: this.authHeaders() }
-        )
+        const api = (useNuxtApp() as any).$api
+        const { data } = await api.post('/player/shop/purchase', { upgrade_id })
         this.player_gems = data.gems_remaining
         // Rafraîchir l'état boutique pour mettre à jour is_purchased / is_available
         await this.fetchShopState()

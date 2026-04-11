@@ -80,7 +80,7 @@ export const useDaycareStore = defineStore('daycare', {
       try {
         const nuxtApp = useNuxtApp()
         const api = nuxtApp.$api as any
-        const { data } = await api.get('/api/player/daycare')
+        const { data } = await api.get('/player/daycare')
         this.applyState(data)
       } finally {
         this.is_loading = false
@@ -102,7 +102,7 @@ export const useDaycareStore = defineStore('daycare', {
     async deposit(slot_number: number, pokemon_id: string, partner_id?: string) {
       const nuxtApp = useNuxtApp()
       const api = nuxtApp.$api as any
-      const { data } = await api.post('/api/player/daycare/deposit', {
+      const { data } = await api.post('/player/daycare/deposit', {
         slot_number,
         pokemon_id,
         ...(partner_id ? { partner_id } : {}),
@@ -114,7 +114,7 @@ export const useDaycareStore = defineStore('daycare', {
     async withdraw(slot_number: number) {
       const nuxtApp = useNuxtApp()
       const api = nuxtApp.$api as any
-      const { data } = await api.post('/api/player/daycare/withdraw', { slot_number })
+      const { data } = await api.post('/player/daycare/withdraw', { slot_number })
       this.applyState(data)
     },
 
@@ -122,7 +122,7 @@ export const useDaycareStore = defineStore('daycare', {
     async hatch(slot_number: number) {
       const nuxtApp = useNuxtApp()
       const api = nuxtApp.$api as any
-      const { data } = await api.post('/api/player/daycare/hatch', { slot_number })
+      const { data } = await api.post('/player/daycare/hatch', { slot_number })
       this.last_hatch_result = data
       this.show_hatch_modal = true
       // Retirer de la liste pending
@@ -140,14 +140,14 @@ export const useDaycareStore = defineStore('daycare', {
     async fetchQueue() {
       const nuxtApp = useNuxtApp()
       const api = nuxtApp.$api as any
-      const { data } = await api.get('/api/player/daycare/queue')
+      const { data } = await api.get('/player/daycare/queue')
       this.queue = data.queue ?? []
     },
 
     async addToQueue(pokemon_id: string, partner_id?: string, target_slot?: number) {
       const nuxtApp = useNuxtApp()
       const api = nuxtApp.$api as any
-      const { data } = await api.post('/api/player/daycare/queue/add', {
+      const { data } = await api.post('/player/daycare/queue/add', {
         pokemon_id,
         ...(partner_id ? { partner_id } : {}),
         ...(target_slot ? { target_slot } : {}),
@@ -158,7 +158,7 @@ export const useDaycareStore = defineStore('daycare', {
     async removeFromQueue(position: number) {
       const nuxtApp = useNuxtApp()
       const api = nuxtApp.$api as any
-      const { data } = await api.delete(`/api/player/daycare/queue/${position}`)
+      const { data } = await api.delete(`/player/daycare/queue/${position}`)
       this.queue = data.queue ?? []
     },
 

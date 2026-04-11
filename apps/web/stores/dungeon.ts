@@ -3,7 +3,7 @@
  */
 import { defineStore } from 'pinia'
 import { useSocket } from '~/composables/useSocket'
-import axios from 'axios'
+import { useNuxtApp } from '#app'
 
 export interface DungeonListEntry {
   id: number
@@ -118,7 +118,7 @@ export const useDungeonStore = defineStore('dungeon', {
 
     async fetchDungeons() {
       try {
-        const { data } = await axios.get('/api/dungeons')
+        const { data } = await (useNuxtApp() as any).$api.get('/dungeons')
         this.dungeons = data
       } catch (err) {
         console.error('[DungeonStore] fetchDungeons error:', err)
@@ -128,9 +128,10 @@ export const useDungeonStore = defineStore('dungeon', {
     // ── Run ──────────────────────────────────────────────────────────────────
 
     async startRun(dungeon_id: number) {
+      const api = (useNuxtApp() as any).$api
       this.loading = true
       try {
-        const { data } = await axios.post(`/api/dungeons/${dungeon_id}/start`)
+        const { data } = await api.post(`/dungeons/${dungeon_id}/start`)
         this.active_run = data
         this.last_room_result = null
         return data
@@ -141,7 +142,7 @@ export const useDungeonStore = defineStore('dungeon', {
 
     async fetchCurrentRun() {
       try {
-        const { data } = await axios.get('/api/dungeons/run/current')
+        const { data } = await (useNuxtApp() as any).$api.get('/dungeons/run/current')
         this.active_run = data.active ? data.run : null
       } catch (err) {
         console.error('[DungeonStore] fetchCurrentRun error:', err)
@@ -149,9 +150,10 @@ export const useDungeonStore = defineStore('dungeon', {
     },
 
     async resolveRoom(run_id: string, room_number: number) {
+      const api = (useNuxtApp() as any).$api
       this.loading = true
       try {
-        const { data } = await axios.post(`/api/dungeons/run/${run_id}/room/${room_number}`)
+        const { data } = await api.post(`/dungeons/run/${run_id}/room/${room_number}`)
         this.last_room_result = data
         this.shop_items = data.shop_items ?? null
 
@@ -184,7 +186,7 @@ export const useDungeonStore = defineStore('dungeon', {
     },
 
     async buyFromShop(run_id: string, item_name: string) {
-      const { data } = await axios.post(`/api/dungeons/run/${run_id}/shop/buy`, { item_name })
+      const { data } = await (useNuxtApp() as any).$api.post(`/dungeons/run/${run_id}/shop/buy`, { item_name })
       if (this.active_run) {
         this.active_run.items_collected.push({ type: 'item', item_name })
       }
@@ -193,7 +195,7 @@ export const useDungeonStore = defineStore('dungeon', {
 
     async abandonRun(run_id: string) {
       try {
-        await axios.post(`/api/dungeons/run/${run_id}/abandon`)
+        await (useNuxtApp() as any).$api.post(`/dungeons/run/${run_id}/abandon`)
         if (this.active_run) this.active_run.status = 'failed'
         this.active_run = null
       } catch (err) {
@@ -205,7 +207,7 @@ export const useDungeonStore = defineStore('dungeon', {
 
     async fetchPendingRewards() {
       try {
-        const { data } = await axios.get('/api/dungeons/rewards')
+        const { data } = await (useNuxtApp() as any).$api.get('/dungeons/rewards')
         this.pending_rewards = data
       } catch (err) {
         console.error('[DungeonStore] fetchPendingRewards error:', err)
@@ -213,7 +215,7 @@ export const useDungeonStore = defineStore('dungeon', {
     },
 
     async collectReward(reward_id: string) {
-      await axios.post(`/api/dungeons/rewards/${reward_id}/collect`)
+      await (useNuxtApp() as any).$api.post(`/dungeons/rewards/${reward_id}/collect`)
       this.pending_rewards = this.pending_rewards.filter((r) => r.id !== reward_id)
     },
 
@@ -221,7 +223,7 @@ export const useDungeonStore = defineStore('dungeon', {
 
     async fetchHistory() {
       try {
-        const { data } = await axios.get('/api/dungeons/history')
+        const { data } = await (useNuxtApp() as any).$api.get('/dungeons/history')
         this.history = data
       } catch (err) {
         console.error('[DungeonStore] fetchHistory error:', err)

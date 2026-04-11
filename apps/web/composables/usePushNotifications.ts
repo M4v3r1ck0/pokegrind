@@ -45,7 +45,7 @@ export function usePushNotifications() {
 
     // Récupérer la clé publique VAPID
     const { $api } = useNuxtApp() as any
-    const { data: keyData } = await $api.get('/api/player/push/vapid-key')
+    const { data: keyData } = await $api.get('/player/push/vapid-key')
     if (!keyData?.public_key) return
 
     // Créer la subscription
@@ -55,7 +55,7 @@ export function usePushNotifications() {
     })
 
     // Envoyer au serveur
-    await $api.post('/api/player/push/subscribe', subscription.toJSON())
+    await $api.post('/player/push/subscribe', subscription.toJSON())
     isSubscribed.value = true
   }
 
@@ -63,7 +63,7 @@ export function usePushNotifications() {
     if (!isSupported.value) return
     try {
       const { $api } = useNuxtApp() as any
-      await $api.post('/api/player/push/unsubscribe')
+      await $api.post('/player/push/unsubscribe')
 
       const reg = await navigator.serviceWorker.getRegistration('/sw.js')
       if (reg) {

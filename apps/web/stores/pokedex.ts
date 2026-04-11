@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
-import { useAuthStore } from './auth'
+import { useNuxtApp } from '#app'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -60,12 +59,8 @@ export const usePokedexStore = defineStore('pokedex', {
   }),
 
   actions: {
-    authHeaders() {
-      const auth = useAuthStore()
-      return auth.accessToken ? { Authorization: `Bearer ${auth.accessToken}` } : {}
-    },
-
     async fetchPokedex() {
+      const api = (useNuxtApp() as any).$api
       this.is_loading = true
       try {
         const params: Record<string, string | number> = {}
@@ -73,11 +68,7 @@ export const usePokedexStore = defineStore('pokedex', {
         if (this.filters.rarity !== null) params.rarity = this.filters.rarity
         if (this.filters.owned_only) params.owned_only = '1'
 
-        const { data } = await axios.get('/api/player/pokedex', {
-          params,
-          withCredentials: true,
-          headers: this.authHeaders(),
-        })
+        const { data } = await api.get('/player/pokedex', { params })
         this.stats = data.stats
         this.entries = data.entries
         this.entries_by_generation = data.by_generation ?? {}
@@ -87,13 +78,11 @@ export const usePokedexStore = defineStore('pokedex', {
     },
 
     async fetchEntry(species_id: number) {
+      const api = (useNuxtApp() as any).$api
       this.is_loading_detail = true
       this.selected_entry = null
       try {
-        const { data } = await axios.get(`/api/player/pokedex/${species_id}`, {
-          withCredentials: true,
-          headers: this.authHeaders(),
-        })
+        const { data } = await api.get(`/player/pokedex/${species_id}`)
         this.selected_entry = data
       } finally {
         this.is_loading_detail = false

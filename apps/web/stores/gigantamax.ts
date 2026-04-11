@@ -3,7 +3,7 @@
  */
 
 import { defineStore } from 'pinia'
-import { useAuthStore } from './auth'
+import { useNuxtApp } from '#app'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -107,9 +107,9 @@ export const useGigantamaxStore = defineStore('gigantamax', {
     // ─── GMax ───────────────────────────────────────────────────────────────
 
     async fetchUnlockedGmax() {
-      const auth = useAuthStore()
+      const api = (useNuxtApp() as any).$api
       try {
-        const data = await auth.apiFetch('/api/gigantamax/unlocked')
+        const { data } = await api.get('/gigantamax/unlocked')
         this.unlocked_gmax = data
       } catch (err: any) {
         this.error = err.message
@@ -117,9 +117,9 @@ export const useGigantamaxStore = defineStore('gigantamax', {
     },
 
     async fetchAvailableGmax() {
+      const api = (useNuxtApp() as any).$api
       try {
-        const auth = useAuthStore()
-        const data = await auth.apiFetch('/api/gigantamax/available')
+        const { data } = await api.get('/gigantamax/available')
         // Merge with unlocked state
         const unlocked_ids = new Set(this.unlocked_gmax.map((g) => g.species_id))
         this.available_gmax = data.map((g: GmaxForm) => ({
@@ -138,8 +138,8 @@ export const useGigantamaxStore = defineStore('gigantamax', {
         return this.cosmetic_forms_cache[species_id]
       }
       try {
-        const auth = useAuthStore()
-        const data = await auth.apiFetch(`/api/pokemon-forms/cosmetic/${species_id}`)
+        const api = (useNuxtApp() as any).$api
+        const { data } = await api.get(`/pokemon-forms/cosmetic/${species_id}`)
         this.cosmetic_forms_cache[species_id] = data
         return data
       } catch {
@@ -148,75 +148,70 @@ export const useGigantamaxStore = defineStore('gigantamax', {
     },
 
     async changeCosmeticForm(pokemon_id: string, form_id: number) {
-      const auth = useAuthStore()
-      return await auth.apiFetch(`/api/player/pokemon/${pokemon_id}/cosmetic-form`, {
-        method: 'POST',
-        body: JSON.stringify({ form_id }),
-      })
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.post(`/player/pokemon/${pokemon_id}/cosmetic-form`, { form_id })
+      return data
     },
 
     async resetCosmeticForm(pokemon_id: string) {
-      const auth = useAuthStore()
-      return await auth.apiFetch(`/api/player/pokemon/${pokemon_id}/cosmetic-form`, {
-        method: 'DELETE',
-      })
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.delete(`/player/pokemon/${pokemon_id}/cosmetic-form`)
+      return data
     },
 
     // ─── Bonbons ────────────────────────────────────────────────────────────
 
     async useCandy(pokemon_id: string, item_id: number, quantity = 1) {
-      const auth = useAuthStore()
-      return await auth.apiFetch(`/api/player/pokemon/${pokemon_id}/use-candy`, {
-        method: 'POST',
-        body: JSON.stringify({ item_id, quantity }),
-      })
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.post(`/player/pokemon/${pokemon_id}/use-candy`, { item_id, quantity })
+      return data
     },
 
     // ─── Évolution manuelle ──────────────────────────────────────────────────
 
     async evolvePokemon(pokemon_id: string) {
-      const auth = useAuthStore()
-      return await auth.apiFetch(`/api/player/pokemon/${pokemon_id}/evolve`, {
-        method: 'POST',
-      })
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.post(`/player/pokemon/${pokemon_id}/evolve`)
+      return data
     },
 
     // ─── Living Dex ──────────────────────────────────────────────────────────
 
     async fetchLivingDexStatus() {
-      const auth = useAuthStore()
+      const api = (useNuxtApp() as any).$api
       try {
-        this.living_dex_status = await auth.apiFetch('/api/player/living-dex')
+        const { data } = await api.get('/player/living-dex')
+        this.living_dex_status = data
       } catch (err: any) {
         this.error = err.message
       }
     },
 
     async fetchLivingDexObjectives() {
-      const auth = useAuthStore()
+      const api = (useNuxtApp() as any).$api
       try {
-        this.living_dex_objectives = await auth.apiFetch('/api/player/living-dex/objectives')
+        const { data } = await api.get('/player/living-dex/objectives')
+        this.living_dex_objectives = data
       } catch (err: any) {
         this.error = err.message
       }
     },
 
     async claimObjective(objective_id: number) {
-      const auth = useAuthStore()
-      await auth.apiFetch(`/api/player/living-dex/objectives/${objective_id}/claim`, {
-        method: 'POST',
-      })
+      const api = (useNuxtApp() as any).$api
+      await api.post(`/player/living-dex/objectives/${objective_id}/claim`)
       // Mettre à jour l'état local
       const obj = this.living_dex_objectives.find((o) => o.id === objective_id)
       if (obj) obj.claimed = true
     },
 
     async fetchMissingSpecies(generation?: number) {
-      const auth = useAuthStore()
+      const api = (useNuxtApp() as any).$api
       this.missing_generation = generation
       try {
         const params = generation ? `?generation=${generation}` : ''
-        this.missing_species = await auth.apiFetch(`/api/player/living-dex/missing${params}`)
+        const { data } = await api.get(`/player/living-dex/missing${params}`)
+        this.missing_species = data
       } catch (err: any) {
         this.error = err.message
       }

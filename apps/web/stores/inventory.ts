@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { useNuxtApp } from '#app'
 import { useAuthStore } from './auth'
 
 export interface PokemonMove {
@@ -60,12 +60,8 @@ export const useInventoryStore = defineStore('inventory', {
   }),
 
   actions: {
-    authHeaders() {
-      const auth = useAuthStore()
-      return auth.accessToken ? { Authorization: `Bearer ${auth.accessToken}` } : {}
-    },
-
     async fetchInventory(filters?: InventoryFilters, page = 1) {
+      const api = (useNuxtApp() as any).$api
       this.isLoading = true
       if (filters) this.filters = filters
 
@@ -76,11 +72,7 @@ export const useInventoryStore = defineStore('inventory', {
       }
 
       try {
-        const { data } = await axios.get('/api/player/pokemon', {
-          params,
-          withCredentials: true,
-          headers: this.authHeaders(),
-        })
+        const { data } = await api.get('/player/pokemon', { params })
         this.pokemon = data.data
         this.pagination = {
           page: data.meta.page,
@@ -95,20 +87,15 @@ export const useInventoryStore = defineStore('inventory', {
     },
 
     async fetchTeam() {
-      const { data } = await axios.get('/api/player/team', {
-        withCredentials: true,
-        headers: this.authHeaders(),
-      })
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.get('/player/team')
       this.team = data.slots
       return data
     },
 
     async sellPokemon(ids: string[]) {
-      const { data } = await axios.post(
-        '/api/player/pokemon/sell',
-        { pokemon_ids: ids },
-        { withCredentials: true, headers: this.authHeaders() }
-      )
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.post('/player/pokemon/sell', { pokemon_ids: ids })
 
       // Retirer les pokémon vendus de l'inventaire local
       this.pokemon = this.pokemon.filter((p) => !ids.includes(p.id))
@@ -123,11 +110,8 @@ export const useInventoryStore = defineStore('inventory', {
     },
 
     async assignToTeam(pokemonId: string, slot: number) {
-      const { data } = await axios.post(
-        `/api/player/pokemon/${pokemonId}/assign-team`,
-        { slot },
-        { withCredentials: true, headers: this.authHeaders() }
-      )
+      const api = (useNuxtApp() as any).$api
+      const { data } = await api.post(`/player/pokemon/${pokemonId}/assign-team`, { slot })
       this.team = data.slots
       return data
     },
