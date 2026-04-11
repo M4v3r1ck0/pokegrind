@@ -282,6 +282,15 @@ const pageTitle = computed(() => PAGE_TITLES[route.path] ?? 'PokeGrind')
   overflow-y: auto;
   overflow-x: hidden;
 }
+.pg-content > .page-wrap {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 24px 28px;
+  width: 100%;
+}
+@media (max-width: 1100px) {
+  .pg-content > .page-wrap { padding: 16px 20px; }
+}
 
 /* ── Mobile (≤ 768px) ── */
 @media (max-width: 768px) {

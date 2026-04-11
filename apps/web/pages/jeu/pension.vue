@@ -132,6 +132,7 @@ function hatchThreshold(slot: any) {
 </script>
 
 <template>
+  <div class="page-wrap">
   <div class="pension-root">
     <div class="pension-slots">
       <!-- Slots -->
@@ -164,6 +165,7 @@ function hatchThreshold(slot: any) {
         </template>
       </div>
     </div>
+  </div>
   </div>
 
   <!-- ── Deposit modal ── -->

@@ -188,6 +188,7 @@ onMounted(() => { team.fetchTeam() })
 </script>
 
 <template>
+  <div class="page-wrap">
   <div class="equipe-page">
     <h1 class="page-title">Équipe & Collection</h1>
 
@@ -460,6 +461,7 @@ onMounted(() => { team.fetchTeam() })
         </div>
       </div>
     </Teleport>
+  </div>
   </div>
 </template>
 
