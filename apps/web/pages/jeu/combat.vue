@@ -361,6 +361,7 @@ function formatTimer(ms: number): string {
   grid-template-columns: 1fr 280px;
   grid-template-rows: auto 1fr;
   gap: var(--space-4);
+  align-items: start;
 }
 
 .zone {
@@ -504,6 +505,11 @@ function formatTimer(ms: number): string {
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: var(--radius-xl);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  max-height: 680px;
 }
 
 .log-panel-header {
@@ -514,11 +520,15 @@ function formatTimer(ms: number): string {
   letter-spacing: 0.1em;
   color: var(--color-text-muted);
   border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
 }
 
 /* Override UiCombatLog height inside panel */
 .log-panel :deep(.combat-log) {
-  height: calc(100% - 40px);
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  overflow-y: auto;
   border: none;
   border-radius: 0;
 }
