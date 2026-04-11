@@ -69,7 +69,7 @@ export const useCombatStore = defineStore('combat', {
       if (!import.meta.client) return
 
       // Guard : éviter la double-initialisation (HMR, navigation, layout + page)
-      if (_socket?.connected) return
+      if (_socket !== null) return
 
       const config = useRuntimeConfig()
       const apiBase = (config.public.apiBase as string) || 'http://localhost:3333'
@@ -150,6 +150,7 @@ export const useCombatStore = defineStore('combat', {
     // ── Nettoyage Socket.io ──────────────────────────────────────────────
     destroyCombat() {
       if (_socket) {
+        _socket.removeAllListeners()
         _socket.disconnect()
         _socket = null
       }
