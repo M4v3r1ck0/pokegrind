@@ -213,8 +213,11 @@ function formatTimer(ms: number): string {
                 :key="move.slot"
                 class="pp-chip"
                 :class="{ 'pp-empty': move.pp_current === 0 }"
-                :title="move.name_fr"
-              >{{ move.pp_current }}/{{ move.pp_max }}</span>
+                :title="move.name_fr + ' — ' + move.pp_current + '/' + move.pp_max + ' PP'"
+              >
+                <span class="pp-move-name">{{ move.name_fr.substring(0, 9) }}</span>
+                <span class="pp-count">{{ move.pp_current }}</span>
+              </span>
             </div>
             <div v-if="pokemon.current_hp <= 0" class="ko-overlay">K.O.</div>
           </div>
@@ -503,14 +506,34 @@ function formatTimer(ms: number): string {
 }
 
 .pp-chip {
-  font-size: 0.58rem;
-  padding: 1px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.55rem;
+  padding: 2px 4px;
   border-radius: 3px;
   background: rgba(255,255,255,0.08);
   color: var(--color-text-secondary);
   font-weight: 600;
+  min-width: 36px;
 }
-.pp-chip.pp-empty { background: rgba(230,57,70,0.2); color: var(--color-accent-red); }
+.pp-move-name {
+  color: var(--color-text-primary);
+  font-size: 0.52rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 36px;
+}
+.pp-count {
+  font-size: 0.5rem;
+  color: var(--color-text-muted);
+  margin-top: 1px;
+}
+.pp-chip.pp-empty { background: rgba(230,57,70,0.2); }
+.pp-chip.pp-empty .pp-move-name { color: var(--color-accent-red); }
+.pp-chip.pp-empty .pp-count { color: var(--color-accent-red); }
 
 .empty-zone {
   color: var(--color-text-muted);
