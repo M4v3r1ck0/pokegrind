@@ -108,15 +108,15 @@ const detail = computed(() => pokedex.selected_entry)
       <h1 class="font-display dex-title">Pokédex</h1>
       <div v-if="pokedex.stats" class="dex-stats">
         <div class="stat-chip">
-          <span class="stat-chip-val">{{ pokedex.stats.owned }}<span class="stat-chip-max">/{{ pokedex.stats.total }}</span></span>
+          <span class="stat-chip-val">{{ pokedex.stats?.owned ?? 0 }}<span class="stat-chip-max">/{{ pokedex.stats?.total ?? 0 }}</span></span>
           <span class="stat-chip-label">Obtenus</span>
         </div>
         <div class="stat-chip">
-          <span class="stat-chip-val" style="color: var(--color-rarity-shiny)">✨ {{ pokedex.stats.shiny }}</span>
+          <span class="stat-chip-val" style="color: var(--color-rarity-shiny)">✨ {{ pokedex.stats?.shiny ?? 0 }}</span>
           <span class="stat-chip-label">Shinys</span>
         </div>
         <div class="stat-chip">
-          <span class="stat-chip-val" style="color: var(--type-grass)">🥚 {{ pokedex.stats.hatched }}</span>
+          <span class="stat-chip-val" style="color: var(--type-grass)">🥚 {{ pokedex.stats?.hatched ?? 0 }}</span>
           <span class="stat-chip-label">Éclos</span>
         </div>
         <div v-if="pokedex.stats?.total" class="dex-progress-wrap">
@@ -128,6 +128,7 @@ const detail = computed(() => pokedex.selected_entry)
           />
         </div>
       </div>
+      <div v-else class="stats-loading">Chargement du Pokédex…</div>
     </div>
 
     <!-- ── Filters ───────────────────────────────────────────────── -->
@@ -280,6 +281,7 @@ const detail = computed(() => pokedex.selected_entry)
 .stat-chip-max { font-size: 0.8rem; color: var(--color-text-muted); }
 .stat-chip-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-muted); }
 .dex-progress-wrap { min-width: 160px; }
+.stats-loading { font-size: 0.82rem; color: var(--color-text-muted); padding: 4px 0; }
 
 /* Filters */
 .dex-filters { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
