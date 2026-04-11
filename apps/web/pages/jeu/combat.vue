@@ -5,7 +5,7 @@ import { useCombatStore } from '~/stores/combat'
 import { useAuthStore } from '~/stores/auth'
 import { useSprite } from '~/composables/useSprite'
 
-definePageMeta({ middleware: 'auth', layout: 'jeu' })
+definePageMeta({ middleware: 'auth', layout: 'jeu', ssr: false })
 
 const combat = useCombatStore()
 const auth = useAuthStore()
@@ -129,7 +129,7 @@ function formatTimer(ms: number): string {
 
       <!-- Enemy zone -->
       <section class="zone zone-enemy">
-        <h3 class="zone-heading">Ennemis</h3>
+        <h3 class="zone-heading zone-heading-enemy">⚔️ ENNEMIS</h3>
         <div class="pokemon-row">
           <div
             v-for="enemy in combat.enemy_team"
@@ -174,7 +174,7 @@ function formatTimer(ms: number): string {
 
       <!-- Player zone -->
       <section class="zone zone-player">
-        <h3 class="zone-heading">Votre équipe</h3>
+        <h3 class="zone-heading zone-heading-player">🛡️ VOTRE ÉQUIPE</h3>
         <div class="pokemon-row">
           <div
             v-for="pokemon in combat.player_team"
@@ -404,12 +404,28 @@ function formatTimer(ms: number): string {
 .log-panel   { grid-column: 2; grid-row: 1 / 3; display: flex; flex-direction: column; }
 
 .zone-heading {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-text-muted);
+  letter-spacing: 0.12em;
   margin-bottom: var(--space-3);
-  font-weight: 700;
+  font-weight: 800;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zone-heading-enemy {
+  color: #ff6b7a;
+  background: rgba(230,57,70,0.12);
+  border: 1px solid rgba(230,57,70,0.25);
+}
+
+.zone-heading-player {
+  color: #4fc3f7;
+  background: rgba(79,195,247,0.10);
+  border: 1px solid rgba(79,195,247,0.25);
 }
 
 /* ── Pokémon cards ──────────────────────────────────────────────────── */
