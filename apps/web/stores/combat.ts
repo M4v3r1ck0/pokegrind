@@ -179,26 +179,28 @@ export const useCombatStore = defineStore('combat', {
 
     // ── Action de combat ──────────────────────────────────────────────────
     handleCombatAction(event: any) {
-      // Mettre à jour les HP de la cible
+      // 1. Mettre à jour HP et PP immédiatement (déclenche l'animation CSS)
       this.updateHP(event.target_id, event.target_hp_remaining, event.target_hp_max)
-
-      // Mettre à jour les PP de l'attaquant
       this.decrementPP(event.attacker_id, event.move_name_fr)
 
-      // Log
+      // 2. Afficher le log avec un micro-délai (laisse l'animation HP démarrer)
+      const msg = this.buildActionMessage(event)
+      setTimeout(() => {
+        this.addLog(msg, 'action', event.effectiveness)
+      }, 80)
+    },
+
+    buildActionMessage(event: any): string {
       let msg = `${this.getPokemonName(event.attacker_id)} utilise ${event.move_name_fr}`
       if (event.damage > 0) {
         msg += ` → ${event.damage} dégâts`
-        if (event.effectiveness === 2 || event.effectiveness === 4)
-          msg += ' (super efficace !)'
-        else if (event.effectiveness === 0.5 || event.effectiveness === 0.25)
-          msg += ' (peu efficace...)'
-        else if (event.effectiveness === 0) msg += ' (sans effet...)'
-        if (event.is_critical) msg += ' CRITIQUE !'
+        if (event.effectiveness === 2 || event.effectiveness === 4) msg += ' ✨ super efficace !'
+        else if (event.effectiveness === 0.5 || event.effectiveness === 0.25) msg += ' peu efficace...'
+        else if (event.effectiveness === 0) msg += ' sans effet'
+        if (event.is_critical) msg += ' 💥 CRITIQUE !'
       }
       if (event.status_applied) msg += ` [${event.status_applied}]`
-
-      this.addLog(msg, 'action', event.effectiveness)
+      return msg
     },
 
     handleKO(event: any) {
