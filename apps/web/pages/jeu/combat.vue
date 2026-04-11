@@ -227,7 +227,7 @@ function regionLabel(r?: string) { return REGIONS[r ?? ''] ?? (r ?? '') }
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
   padding: 14px;
   gap: 12px;
   background:
@@ -235,7 +235,7 @@ function regionLabel(r?: string) { return REGIONS[r ?? ''] ?? (r ?? '') }
     linear-gradient(0deg, rgba(79,195,247,0.04) 0%, transparent 40%);
 }
 .arena-zone {
-  flex: 1;
+  flex: none;
   background: rgba(255,255,255,0.025);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 12px;
@@ -243,7 +243,6 @@ function regionLabel(r?: string) { return REGIONS[r ?? ''] ?? (r ?? '') }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  overflow: hidden;
 }
 .zone-label {
   font-size: 10px;
