@@ -13,7 +13,7 @@ export interface JwtPayload {
 
 export default class JwtService {
   /**
-   * Génère un access token JWT (expire 15min)
+   * Génère un access token JWT (expire 24h)
    */
   static generateAccessToken(payload: JwtPayload): string {
     return jwt.sign(payload, env.get('JWT_SECRET'), { expiresIn: '24h' })
