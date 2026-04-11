@@ -33,13 +33,15 @@ onMounted(async () => {
 })
 
 const filteredDepositPokemon = computed(() => {
+  // Seuls les Pokémon niveau 100 non déjà en pension
   const eligible = depositPokemonList.value.filter(
-    (p: any) => p.level >= 100 && p.slot_daycare === null
+    (p: any) => Number(p.level) >= 100 && !p.slot_daycare
   )
-  if (!depositSearch.value.trim()) return eligible
+  if (!depositSearch.value?.trim()) return eligible
   const q = depositSearch.value.trim().toLowerCase()
   return eligible.filter((p: any) =>
-    p.name_fr.toLowerCase().includes(q)
+    (p.name_fr ?? '').toLowerCase().includes(q) ||
+    (p.rarity ?? '').toLowerCase().includes(q)
   )
 })
 
@@ -54,7 +56,7 @@ async function openDepositModal(slot_number: number) {
   try {
     const api = nuxtApp.$api as any
     const { data } = await api.get('/player/pokemon', {
-      params: { level: 100, available_for_daycare: true, per_page: 100 },
+      params: { limit: 100 },
     })
     depositPokemonList.value = data.data ?? []
   } catch (e) {
@@ -269,14 +271,11 @@ function formatDamage(n: number): string {
         />
         <div v-if="isLoadingPokemon" class="deposit-loading">Chargement…</div>
         <div v-else-if="filteredDepositPokemon.length === 0" class="deposit-empty">
-          <template v-if="depositSearch.trim()">
+          <template v-if="depositSearch?.trim()">
             Aucun résultat pour "{{ depositSearch }}"
           </template>
           <template v-else>
-            Aucun Pokémon niveau 100 disponible hors pension.<br/>
-            <small style="opacity:0.6">
-              Les Pokémon déjà en équipe peuvent être déposés en pension.
-            </small>
+            Aucun Pokémon niveau 100 disponible hors pension.
           </template>
         </div>
         <div v-else class="deposit-list">
