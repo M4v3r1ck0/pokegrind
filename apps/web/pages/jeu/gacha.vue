@@ -87,8 +87,18 @@ const pullSummary = computed(() => {
   return { counts, shinies }
 })
 
-const epicPct = computed(() => Math.min(100, Math.round((gacha.pity.pity_epic / (gacha.pity.epic_threshold || 50)) * 100)))
-const legendPct = computed(() => Math.min(100, Math.round((gacha.pity.pity_legendary / (gacha.pity.legendary_threshold || 200)) * 100)))
+const epicPct = computed(() => {
+  if (!gacha.pity) return 0
+  return Math.min(100, Math.round(
+    (gacha.pity.pity_epic / (gacha.pity.epic_threshold || 50)) * 100
+  ))
+})
+const legendPct = computed(() => {
+  if (!gacha.pity) return 0
+  return Math.min(100, Math.round(
+    (gacha.pity.pity_legendary / (gacha.pity.legendary_threshold || 200)) * 100
+  ))
+})
 const showBest = computed(() => !gacha.isPulling && gacha.lastResults.some((_, i) => revealed.value[i]))
 </script>
 
@@ -96,17 +106,18 @@ const showBest = computed(() => !gacha.isPulling && gacha.lastResults.some((_, i
   <div class="gacha-root">
     <!-- Panneau gauche : pity + pulls -->
     <aside class="gacha-left">
-      <div class="pity-block">
+      <div v-if="gacha.pity" class="pity-block">
         <div class="pity-label">Pity Épique</div>
         <div class="pity-bar-wrap"><div class="pity-bar pity-epic" :style="{ width: epicPct + '%' }" /></div>
         <div class="pity-num">{{ gacha.pity.pity_epic }} / {{ gacha.pity.epic_threshold }}</div>
       </div>
-      <div class="pity-block">
+      <div v-if="gacha.pity" class="pity-block">
         <div class="pity-label">Pity Légendaire</div>
         <div class="pity-bar-wrap"><div class="pity-bar pity-legend" :style="{ width: legendPct + '%' }" /></div>
         <div class="pity-num">{{ gacha.pity.pity_legendary }} / {{ gacha.pity.legendary_threshold }}</div>
       </div>
-      <div class="pity-total">{{ gacha.pity.total_pulls.toLocaleString('fr') }} pulls total</div>
+      <div v-if="gacha.pity" class="pity-total">{{ gacha.pity.total_pulls.toLocaleString('fr') }} pulls total</div>
+      <div v-else class="pity-total" style="opacity:0.3">Chargement…</div>
 
       <div class="pull-btns">
         <button class="pull-btn pull-1"   :disabled="gacha.isPulling" @click="doPull(1)">
