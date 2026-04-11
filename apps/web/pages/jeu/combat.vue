@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useNuxtApp } from '#app'
 import { useCombatStore } from '~/stores/combat'
 import { useAuthStore } from '~/stores/auth'
@@ -90,518 +90,262 @@ function formatTimer(ms: number): string {
   const secs = Math.ceil(ms / 1000)
   return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`
 }
+
+function hpPct(p: any) { return p.max_hp > 0 ? Math.max(0, Math.round(p.current_hp / p.max_hp * 100)) : 0 }
+function hpClass(p: any) {
+  const pct = hpPct(p)
+  if (pct > 50) return 'hp-high'
+  if (pct > 20) return 'hp-med'
+  return 'hp-low'
+}
+
+const REGIONS: Record<string, string> = {
+  kanto: 'Kanto', johto: 'Johto', hoenn: 'Hoenn', sinnoh: 'Sinnoh',
+  unova: 'Unova', kalos: 'Kalos', alola: 'Alola', galar: 'Galar', paldea: 'Paldea',
+}
+function regionLabel(r?: string) { return REGIONS[r ?? ''] ?? (r ?? '') }
 </script>
 
 <template>
-  <div class="combat-page">
-
-    <!-- ── Top bar ──────────────────────────────────────────────────── -->
-    <div class="combat-topbar">
-      <div class="floor-info">
-        <span class="floor-label">Étage</span>
-        <span v-if="combat.floor" class="floor-name">
-          <span class="floor-num">{{ combat.floor.floor_number }}</span>
-          — {{ combat.floor.floor_name_fr }}
-          <span class="floor-region">({{ combat.floor.region }})</span>
-        </span>
-        <span v-else class="floor-name text-muted">Connexion…</span>
-        <span class="battle-counter">
-          Combat {{ combat.battle_number }}/10
-          <span v-if="combat.is_boss" class="boss-pill">BOSS</span>
-        </span>
-      </div>
-
-      <div class="topbar-right">
-        <div v-if="combat.is_boss && combat.boss_timer_remaining_ms !== null" class="boss-timer">
-          ⏱ {{ formatTimer(combat.boss_timer_remaining_ms) }}
+  <div class="combat-root">
+    <!-- Arena -->
+    <div class="combat-arena">
+      <!-- Ennemis -->
+      <section class="arena-zone zone-enemy">
+        <div class="zone-label enemy-label">⚔ Ennemis
+          <span class="floor-info">Étage {{ combat.floor?.floor_number }} — {{ regionLabel(combat.floor?.region) }} · Combat {{ combat.battle_number }}/10</span>
+          <button class="btn-change-floor" @click="showFloorModal = true">Changer d'étage</button>
         </div>
-        <div class="session-gold">
-          💰 <span>+{{ combat.total_gold_earned_session.toLocaleString('fr') }} or</span>
-        </div>
-        <div :class="['conn-dot', combat.is_connected ? 'conn-ok' : 'conn-off']"
-             :title="combat.is_connected ? 'Connecté' : 'Déconnecté'" />
-        <button class="btn-floor" @click="showFloorModal = true">Changer d'étage</button>
-      </div>
-    </div>
-
-    <!-- ── Arena ───────────────────────────────────────────────────── -->
-    <div class="arena">
-
-      <!-- Enemy zone -->
-      <section class="zone zone-enemy">
-        <h3 class="zone-heading zone-heading-enemy">⚔️ ENNEMIS</h3>
-        <div class="pokemon-row">
+        <div class="poke-cards">
           <div
             v-for="enemy in combat.enemy_team"
             :key="enemy.id"
-            class="poke-card"
+            class="poke-card enemy-card"
             :class="{ ko: enemy.current_hp <= 0 }"
           >
             <img
-              v-if="enemy.sprite_url"
-              :src="enemy.sprite_url"
-              :alt="enemy.name_fr"
               class="poke-sprite"
-            />
-            <div v-else class="poke-sprite-ph">?</div>
-            <UiStatusIcon
-              v-if="enemy.status && enemy.current_hp > 0"
-              :status="enemy.status"
-              size="sm"
-              class="status-overlay"
+              :src="enemy.sprite_url || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png`"
+              :alt="enemy.name_fr"
+              @error="onSpriteError($event, enemy)"
             />
             <div class="poke-name">{{ enemy.name_fr }}</div>
             <div class="poke-lv">Niv.{{ enemy.level }}</div>
-            <UiHpBar
-              :current="enemy.current_hp"
-              :max="enemy.max_hp"
-              height="5px"
-              :show-text="true"
-            />
-            <div v-if="enemy.current_hp <= 0" class="ko-overlay">K.O.</div>
-          </div>
-          <div v-if="combat.enemy_team.length === 0" class="empty-zone">
-            En attente des ennemis…
+            <div class="hp-bar-wrap">
+              <div class="hp-bar" :class="hpClass(enemy)" :style="{ width: hpPct(enemy) + '%' }" />
+            </div>
+            <div class="hp-text">{{ enemy.current_hp <= 0 ? 'K.O.' : enemy.current_hp + '/' + enemy.max_hp }}</div>
           </div>
         </div>
       </section>
 
-      <!-- Combat log (center) -->
-      <div class="log-panel">
-        <div class="log-panel-header">Journal de combat</div>
-        <UiCombatLog :entries="logEntries" :auto-scroll="true" />
-      </div>
-
-      <!-- Player zone -->
-      <section class="zone zone-player">
-        <h3 class="zone-heading zone-heading-player">🛡️ VOTRE ÉQUIPE</h3>
-        <div class="pokemon-row">
+      <!-- Équipe joueur -->
+      <section class="arena-zone zone-team">
+        <div class="zone-label team-label">🛡 Votre équipe</div>
+        <div class="poke-cards">
           <div
             v-for="pokemon in combat.player_team"
             :key="pokemon.id"
-            class="poke-card poke-card-player"
+            class="poke-card team-card"
             :class="{ ko: pokemon.current_hp <= 0 }"
           >
             <img
-              v-if="pokemon.sprite_url || pokemon.species_id"
+              class="poke-sprite"
               :src="playerSpriteUrl(pokemon)"
               :alt="pokemon.name_fr"
-              class="poke-sprite poke-sprite-player"
-              @error="(e: Event) => onSpriteError(e, pokemon)"
-            />
-            <div v-else class="poke-sprite-ph">?</div>
-            <UiStatusIcon
-              v-if="pokemon.status && pokemon.current_hp > 0"
-              :status="pokemon.status"
-              size="sm"
-              class="status-overlay"
+              @error="onSpriteError($event, pokemon)"
             />
             <div class="poke-name">{{ pokemon.name_fr }}</div>
             <div class="poke-lv">Niv.{{ pokemon.level }}</div>
-            <UiHpBar
-              :current="pokemon.current_hp"
-              :max="pokemon.max_hp"
-              height="5px"
-              :show-text="true"
-            />
-            <!-- Barre XP -->
-            <div v-if="pokemon.xp !== undefined" class="xp-bar-wrap">
-              <UiProgressBar
-                :value="pokemon.xp ?? 0"
-                :max="pokemon.xp_to_next ?? 1"
-                color="#a78bfa"
-                height="3px"
-                :show-text="false"
-              />
-              <span class="xp-label">XP {{ pokemon.xp }}/{{ pokemon.xp_to_next }}</span>
+            <div class="hp-bar-wrap">
+              <div class="hp-bar" :class="hpClass(pokemon)" :style="{ width: hpPct(pokemon) + '%' }" />
             </div>
-            <!-- Move PP -->
-            <div class="moves-pp">
+            <div class="hp-text">{{ pokemon.current_hp <= 0 ? 'K.O.' : pokemon.current_hp + '/' + pokemon.max_hp }}</div>
+            <!-- XP bar -->
+            <div v-if="pokemon.xp_to_next" class="xp-bar-wrap">
+              <div class="xp-bar" :style="{ width: Math.min(100, Math.round((pokemon.xp ?? 0) / pokemon.xp_to_next * 100)) + '%' }" />
+            </div>
+            <!-- Move dots -->
+            <div class="move-dots">
               <span
-                v-for="move in pokemon.moves"
-                :key="move.slot"
-                class="pp-chip"
-                :class="{ 'pp-empty': move.pp_current === 0 }"
-                :title="move.name_fr + ' — ' + move.pp_current + '/' + move.pp_max + ' PP'"
-              >
-                <span class="pp-move-name">{{ move.name_fr.substring(0, 10) }}</span>
-                <span class="pp-count">{{ move.pp_current }}/{{ move.pp_max }}</span>
-              </span>
+                v-for="(move, i) in pokemon.moves"
+                :key="i"
+                class="move-dot"
+                :class="{ empty: move.pp_current === 0 }"
+                :title="move.name_fr + ' ' + move.pp_current + '/' + move.pp_max"
+              />
             </div>
-            <div v-if="pokemon.current_hp <= 0" class="ko-overlay">K.O.</div>
-          </div>
-          <div v-if="combat.player_team.length === 0" class="empty-zone">
-            Aucun Pokémon en équipe. Assignez-en depuis l'inventaire.
           </div>
         </div>
       </section>
     </div>
 
-    <!-- ── Floor modal ─────────────────────────────────────────────── -->
-    <UiModal :open="showFloorModal" title="Changer d'étage" size="md" @close="showFloorModal = false">
-      <div class="floor-list">
-        <button
-          v-for="floor in availableFloors"
-          :key="floor.floor_number"
-          class="floor-btn"
-          :class="{
-            active:   floor.floor_number === combat.floor?.floor_number,
-            cleared:  floor.boss_defeated,
-          }"
-          @click="changeFloor(floor.floor_number)"
-        >
-          <span class="floor-btn-name">
-            <span class="floor-btn-num">{{ floor.floor_number }}</span>
-            {{ floor.name_fr }}
-          </span>
-          <span v-if="floor.has_boss" class="floor-boss-icon">
-            {{ floor.boss_defeated ? '✅' : '👑' }}
-          </span>
-        </button>
+    <!-- Journal -->
+    <aside class="combat-log-col">
+      <div class="log-header">Journal</div>
+      <UiCombatLog :entries="logEntries" :auto-scroll="true" class="log-body" />
+      <div class="log-footer">
+        <span class="session-gold">💰 +{{ combat.total_gold_earned_session.toLocaleString('fr') }} or</span>
+        <span class="session-dot" :class="{ online: combat.is_connected }" />
       </div>
-    </UiModal>
-
-  <!-- FAB équipe — raccourci visible en permanence -->
-  <NuxtLink to="/jeu/equipe" class="equipe-fab" title="Gérer l'équipe">
-    👥 Équipe
-  </NuxtLink>
-
+    </aside>
   </div>
+
+  <!-- Modal étages -->
+  <UiModal :open="showFloorModal" title="Changer d'étage" size="md" @close="showFloorModal = false">
+    <div class="floor-list">
+      <button
+        v-for="floor in availableFloors"
+        :key="floor.floor_number"
+        class="floor-btn"
+        :class="{
+          active:  floor.floor_number === combat.floor?.floor_number,
+          cleared: floor.boss_defeated,
+        }"
+        @click="changeFloor(floor.floor_number)"
+      >
+        <span class="floor-btn-name">
+          <span class="floor-btn-num">{{ floor.floor_number }}</span>
+          {{ floor.name_fr }}
+        </span>
+        <span v-if="floor.has_boss" class="floor-boss-icon">
+          {{ floor.boss_defeated ? '✅' : '👑' }}
+        </span>
+      </button>
+    </div>
+  </UiModal>
 </template>
 
 <style scoped>
-.combat-page {
+.combat-root {
+  display: flex;
+  height: calc(100dvh - 48px);
+  overflow: hidden;
+  background: #0d0f1a;
+}
+.combat-arena {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  max-width: 1400px;
-  margin: 0 auto;
+  overflow: hidden;
+  padding: 14px;
+  gap: 12px;
+  background:
+    linear-gradient(180deg, rgba(230,57,70,0.04) 0%, transparent 40%),
+    linear-gradient(0deg, rgba(79,195,247,0.04) 0%, transparent 40%);
 }
-
-/* ── Top bar ────────────────────────────────────────────────────────── */
-.combat-topbar {
+.arena-zone {
+  flex: 1;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 12px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--color-bg-secondary);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--radius-xl);
-  padding: var(--space-3) var(--space-5);
-  gap: var(--space-4);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
 }
-
-.floor-info {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.floor-label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-muted);
-}
-
-.floor-name {
-  font-family: var(--font-primary);
-  font-weight: 700;
-  color: var(--color-accent-purple);
-  font-size: 1rem;
-}
-
-.floor-num {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  color: var(--color-accent-yellow);
-}
-
-.floor-region { font-size: 0.8rem; color: var(--color-text-muted); }
-
-.battle-counter {
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.boss-pill {
-  background: var(--color-accent-red);
-  color: #fff;
-  font-size: 0.65rem;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
-  letter-spacing: 0.05em;
-  animation: pulse-gold 1.5s ease-in-out infinite;
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.boss-timer {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  color: var(--color-accent-yellow);
-  letter-spacing: 0.04em;
-}
-
-.session-gold {
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--color-accent-yellow);
-}
-
-.conn-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.conn-ok  { background: var(--type-grass); box-shadow: 0 0 6px rgba(86,201,109,0.6); }
-.conn-off { background: var(--color-accent-red); }
-
-.btn-floor {
-  background: rgba(156,106,222,0.15);
-  border: 1px solid rgba(156,106,222,0.4);
-  color: #b894f5;
-  border-radius: var(--radius-md);
-  padding: 6px 14px;
-  font-family: var(--font-primary);
-  font-weight: 700;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: var(--transition-fast);
-  white-space: nowrap;
-}
-.btn-floor:hover { background: rgba(156,106,222,0.25); }
-
-/* ── Arena ──────────────────────────────────────────────────────────── */
-.arena {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  grid-template-rows: auto 1fr;
-  gap: var(--space-4);
-  align-items: start;
-}
-
-.zone {
-  background: var(--color-bg-secondary);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--radius-xl);
-  padding: var(--space-4);
-}
-
-.zone-enemy  { grid-column: 1; grid-row: 1; }
-.zone-player { grid-column: 1; grid-row: 2; }
-.log-panel   { grid-column: 2; grid-row: 1 / 3; display: flex; flex-direction: column; }
-
-.zone-heading {
-  font-size: 0.72rem;
-  text-transform: uppercase;
+.zone-label {
+  font-size: 10px;
+  font-weight: 900;
   letter-spacing: 0.12em;
-  margin-bottom: var(--space-3);
-  font-weight: 800;
-  padding: 6px 12px;
-  border-radius: var(--radius-md);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.zone-heading-enemy {
-  color: #ff6b7a;
-  background: rgba(230,57,70,0.12);
-  border: 1px solid rgba(230,57,70,0.25);
-}
-
-.zone-heading-player {
-  color: #4fc3f7;
-  background: rgba(79,195,247,0.10);
-  border: 1px solid rgba(79,195,247,0.25);
-}
-
-/* ── Pokémon cards ──────────────────────────────────────────────────── */
-.pokemon-row {
+  text-transform: uppercase;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
+  align-items: center;
+  gap: 10px;
 }
+.enemy-label { color: #f87171; }
+.team-label  { color: #4fc3f7; }
+.floor-info { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.35); letter-spacing: 0; }
+.btn-change-floor {
+  margin-left: auto;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.5);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn-change-floor:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+.poke-cards { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
 
 .poke-card {
-  position: relative;
-  background: var(--color-bg-tertiary);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3);
-  width: 108px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  transition: var(--transition-fast);
-}
-
-.poke-card-player {
-  border-color: rgba(156,106,222,0.2);
-}
-
-.poke-card.ko {
-  opacity: 0.35;
-  filter: grayscale(0.7);
-}
-
-.poke-sprite {
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-  image-rendering: pixelated;
-}
-
-.poke-sprite-player {
-  filter: drop-shadow(0 2px 8px rgba(156,106,222,0.3));
-}
-
-.poke-sprite-ph {
-  width: 72px;
-  height: 72px;
-  background: rgba(255,255,255,0.05);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-muted);
-  font-size: 1.5rem;
-}
-
-.status-overlay {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-}
-
-.poke-name {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 8px;
+  width: 88px;
   text-align: center;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.poke-lv {
-  font-size: 0.65rem;
-  color: var(--color-text-muted);
-}
-
-.ko-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: 1rem;
-  color: var(--color-accent-red);
-  letter-spacing: 0.08em;
-  border-radius: var(--radius-lg);
-}
-
-/* XP bar */
-.xp-bar-wrap { margin-top: 2px; width: 100%; }
-.xp-label { font-size: 0.55rem; color: var(--color-text-muted); text-align: center; display: block; }
-
-/* PP chips */
-.moves-pp {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  justify-content: center;
-  margin-top: 2px;
-}
-
-.pp-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 0.55rem;
-  padding: 2px 4px;
-  border-radius: 3px;
-  background: rgba(255,255,255,0.08);
-  color: var(--color-text-secondary);
-  font-weight: 600;
-  min-width: 36px;
-}
-.pp-move-name {
-  color: var(--color-text-primary);
-  font-size: 0.52rem;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 36px;
-}
-.pp-count {
-  font-size: 0.5rem;
-  color: var(--color-text-muted);
-  margin-top: 1px;
-}
-.pp-chip.pp-empty { background: rgba(230,57,70,0.2); }
-.pp-chip.pp-empty .pp-move-name { color: var(--color-accent-red); }
-.pp-chip.pp-empty .pp-count { color: var(--color-accent-red); }
-
-.empty-zone {
-  color: var(--color-text-muted);
-  font-style: italic;
-  font-size: 0.85rem;
-  padding: var(--space-4);
-}
-
-/* ── Log panel ──────────────────────────────────────────────────────── */
-.log-panel {
-  background: var(--color-bg-secondary);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-  max-height: 680px;
-}
-
-.log-panel-header {
-  padding: var(--space-3) var(--space-4);
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-text-muted);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  transition: opacity 0.3s;
   flex-shrink: 0;
 }
+.poke-card.ko { opacity: 0.35; filter: grayscale(0.7); }
+.enemy-card { border-color: rgba(248,113,113,0.2); background: rgba(230,57,70,0.04); }
+.team-card  { border-color: rgba(79,195,247,0.18); background: rgba(79,195,247,0.04); }
 
-/* Override UiCombatLog height inside panel */
-.log-panel :deep(.combat-log) {
-  flex: 1;
-  min-height: 0;
-  height: auto;
-  overflow-y: auto;
-  border: none;
-  border-radius: 0;
+.poke-sprite {
+  width: 52px; height: 52px;
+  image-rendering: pixelated;
+  display: block;
+  margin: 0 auto 4px;
+  object-fit: contain;
 }
+.poke-name { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.poke-lv   { font-size: 9px; color: rgba(255,255,255,0.35); margin-bottom: 5px; }
 
-/* ── Floor list (modal) ─────────────────────────────────────────────── */
+.hp-bar-wrap { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
+.hp-bar      { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+.hp-high { background: #56c96d; }
+.hp-med  { background: #fbbf24; }
+.hp-low  { background: #f87171; }
+.hp-text { font-size: 9px; color: rgba(255,255,255,0.3); }
+
+.xp-bar-wrap { height: 2px; background: rgba(255,255,255,0.06); border-radius: 1px; overflow: hidden; margin: 3px 0; }
+.xp-bar      { height: 100%; background: #9c6ade; border-radius: 1px; transition: width 0.6s ease; }
+
+.move-dots { display: flex; justify-content: center; gap: 3px; margin-top: 4px; }
+.move-dot  { width: 5px; height: 5px; border-radius: 50%; background: rgba(156,106,222,0.55); }
+.move-dot.empty { background: rgba(255,255,255,0.1); }
+
+/* Journal */
+.combat-log-col {
+  width: 240px;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(6,8,18,0.7);
+  border-left: 1px solid rgba(255,255,255,0.05);
+}
+.log-header {
+  padding: 12px 14px 8px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+.log-body { flex: 1; min-height: 0; }
+.log-footer {
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.session-gold { color: #ffd700; font-weight: 700; }
+.session-dot  { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.2); margin-left: auto; }
+.session-dot.online { background: #56c96d; box-shadow: 0 0 6px #56c96d66; }
+
+/* Floor modal */
 .floor-list {
   display: flex;
   flex-direction: column;
@@ -609,73 +353,24 @@ function formatTimer(ms: number): string {
   max-height: 400px;
   overflow-y: auto;
 }
-
 .floor-btn {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  padding: 8px 12px;
   cursor: pointer;
-  color: var(--color-text-secondary);
-  font-family: var(--font-primary);
+  color: rgba(255,255,255,0.55);
+  font-family: inherit;
   font-size: 0.85rem;
   text-align: left;
-  transition: var(--transition-fast);
+  transition: all 0.15s;
 }
-.floor-btn:hover { background: rgba(255,255,255,0.08); color: var(--color-text-primary); }
+.floor-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
 .floor-btn.active { border-color: rgba(156,106,222,0.5); background: rgba(156,106,222,0.12); color: #b894f5; }
-.floor-btn.cleared { color: var(--type-grass); }
-
-.floor-btn-num {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  color: var(--color-accent-yellow);
-  margin-right: var(--space-2);
-}
-
+.floor-btn.cleared { color: #56c96d; }
+.floor-btn-num { font-weight: 900; color: #ffd700; margin-right: 8px; }
 .floor-boss-icon { font-size: 1rem; }
-
-/* ── FAB équipe ─────────────────────────────────────────────────────── */
-.equipe-fab {
-  position: fixed;
-  bottom: 80px;
-  left: var(--space-4);
-  z-index: 50;
-  background: rgba(79,195,247,0.15);
-  border: 1px solid rgba(79,195,247,0.3);
-  border-radius: var(--radius-full);
-  padding: 8px 16px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #4fc3f7;
-  text-decoration: none;
-  backdrop-filter: blur(8px);
-  transition: var(--transition-fast);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.equipe-fab:hover {
-  background: rgba(79,195,247,0.25);
-  transform: translateY(-2px);
-}
-
-/* ── Responsive ─────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .arena {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-  }
-  .log-panel { grid-column: 1; grid-row: 3; }
-  .zone-enemy  { grid-row: 1; }
-  .zone-player { grid-row: 2; }
-}
-
-@media (max-width: 640px) {
-  .poke-card { width: 90px; }
-  .poke-sprite { width: 56px; height: 56px; }
-}
 </style>
