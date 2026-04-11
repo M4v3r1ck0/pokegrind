@@ -30,7 +30,7 @@ const RARITY_COLORS: Record<string, string> = {
   mythic:    'var(--color-rarity-mythic)',
 }
 
-async function doPull(count: 1 | 10) {
+async function doPull(count: 1 | 10 | 25 | 50 | 100) {
   try {
     revealed.value = []
     await gacha.pull(count)
@@ -38,7 +38,7 @@ async function doPull(count: 1 | 10) {
     if (gacha.lastResults.length > 0) {
       revealing.value = true
       for (let i = 0; i < gacha.lastResults.length; i++) {
-        await new Promise(r => setTimeout(r, count === 1 ? 400 : 120))
+        await new Promise(r => setTimeout(r, count === 1 ? 400 : count <= 10 ? 120 : 60))
         revealed.value.push(true)
         // Fire confetti on shiny reveal
         if (gacha.lastResults[i]?.pokemon?.is_shiny) {
@@ -139,6 +139,33 @@ function rarityGlow(rarity: string): string {
             <span class="pull-price">
               9 000 💰 <span class="pull-discount">-10%</span>
             </span>
+          </button>
+
+          <button
+            class="btn-pull btn-pull-25"
+            :disabled="gacha.isPulling"
+            @click="doPull(25)"
+          >
+            <span class="pull-count">25 Pulls</span>
+            <span class="pull-price">22 500 💰 <span class="pull-discount">-10%</span></span>
+          </button>
+
+          <button
+            class="btn-pull btn-pull-50"
+            :disabled="gacha.isPulling"
+            @click="doPull(50)"
+          >
+            <span class="pull-count">50 Pulls</span>
+            <span class="pull-price">42 500 💰 <span class="pull-discount">-15%</span></span>
+          </button>
+
+          <button
+            class="btn-pull btn-pull-100"
+            :disabled="gacha.isPulling"
+            @click="doPull(100)"
+          >
+            <span class="pull-count">100 Pulls</span>
+            <span class="pull-price">80 000 💰 <span class="pull-discount">-20%</span></span>
           </button>
         </div>
 
@@ -374,6 +401,21 @@ function rarityGlow(rarity: string): string {
   background: linear-gradient(135deg, #4a0e8f, #9c6ade);
   color: #fff;
   box-shadow: var(--shadow-glow-purple);
+}
+.btn-pull-25 {
+  background: linear-gradient(135deg, #0e6b4a, #2eca8b);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(46,202,139,0.35);
+}
+.btn-pull-50 {
+  background: linear-gradient(135deg, #8f6b0e, #ffd700);
+  color: #1a1c2e;
+  box-shadow: var(--shadow-glow-yellow);
+}
+.btn-pull-100 {
+  background: linear-gradient(135deg, #8f0e0e, #e63946);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(230,57,70,0.45);
 }
 
 .pull-count { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.03em; }

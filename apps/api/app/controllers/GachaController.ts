@@ -9,7 +9,7 @@ import db from '@adonisjs/lucid/services/db'
 
 const pullValidator = vine.compile(
   vine.object({
-    count: vine.number().in([1, 10]),
+    count: vine.number().in([1, 10, 25, 50, 100]),
     banner_id: vine.string().optional(),
   })
 )
@@ -21,7 +21,7 @@ export default class GachaController {
   async pull(ctx: HttpContext) {
     const data = await ctx.request.validateUsing(pullValidator)
     const player = ctx.player
-    const count = data.count as 1 | 10
+    const count = data.count as 1 | 10 | 25 | 50 | 100
 
     try {
       const results = await db.transaction(async () => {

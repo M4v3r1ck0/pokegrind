@@ -42,7 +42,7 @@ export const useGachaStore = defineStore('gacha', {
       return data
     },
 
-    async pull(count: 1 | 10) {
+    async pull(count: 1 | 10 | 25 | 50 | 100) {
       const api = (useNuxtApp() as any).$api
       this.isPulling = true
       try {
