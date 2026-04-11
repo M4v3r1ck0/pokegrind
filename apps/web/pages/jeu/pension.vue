@@ -33,10 +33,13 @@ onMounted(async () => {
 })
 
 const filteredDepositPokemon = computed(() => {
-  if (!depositSearch.value) return depositPokemonList.value
-  const q = depositSearch.value.toLowerCase()
-  return depositPokemonList.value.filter((p: any) =>
-    p.name_fr.toLowerCase().includes(q) || p.rarity.toLowerCase().includes(q)
+  const eligible = depositPokemonList.value.filter(
+    (p: any) => p.level >= 100 && p.slot_daycare === null
+  )
+  if (!depositSearch.value.trim()) return eligible
+  const q = depositSearch.value.trim().toLowerCase()
+  return eligible.filter((p: any) =>
+    p.name_fr.toLowerCase().includes(q)
   )
 })
 
@@ -266,7 +269,15 @@ function formatDamage(n: number): string {
         />
         <div v-if="isLoadingPokemon" class="deposit-loading">Chargement…</div>
         <div v-else-if="filteredDepositPokemon.length === 0" class="deposit-empty">
-          Aucun Pokémon niveau 100 disponible.
+          <template v-if="depositSearch.trim()">
+            Aucun résultat pour "{{ depositSearch }}"
+          </template>
+          <template v-else>
+            Aucun Pokémon niveau 100 disponible hors pension.<br/>
+            <small style="opacity:0.6">
+              Les Pokémon déjà en équipe peuvent être déposés en pension.
+            </small>
+          </template>
         </div>
         <div v-else class="deposit-list">
           <button
