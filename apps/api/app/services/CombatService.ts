@@ -515,7 +515,7 @@ export function calcActionDelay(pokemon: CombatPokemon): number {
   if (pokemon.status?.type === 'paralysis') speed *= 0.5
   speed = Math.max(1, speed)
   const raw = Math.round((1500 * 50) / speed)
-  return Math.min(2000, Math.max(500, raw))
+  return Math.min(1200, Math.max(300, raw))
 }
 
 // ─── Sélection du move ───────────────────────────────────────────────────────

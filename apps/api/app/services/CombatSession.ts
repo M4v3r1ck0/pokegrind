@@ -355,6 +355,18 @@ export default class CombatSession {
       this.applyMoveEffect(pokemon, target, move, 0)
       pokemon.current_move_index = index !== -1 ? (index + 1) % pokemon.moves.length : 0
       pokemon.next_action_at = Date.now() + calcActionDelay(pokemon)
+      // Émettre le move de statut pour qu'il apparaisse dans le journal
+      this.io.to(this.socket_room).emit('combat:action', {
+        attacker_id: pokemon.id,
+        move_name_fr: move.name_fr,
+        target_id: target.id,
+        damage: 0,
+        is_critical: false,
+        effectiveness: 1,
+        target_hp_remaining: target.current_hp,
+        target_hp_max: target.max_hp,
+        status_applied: move.effect?.effect_type ?? null,
+      })
       return
     }
 
