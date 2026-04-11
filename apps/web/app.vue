@@ -77,6 +77,8 @@ function broadcastBg(type: string): string {
     </div>
   </div>
 
-  <NuxtPage />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
   <OfflineReportModal />
 </template>
