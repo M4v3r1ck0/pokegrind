@@ -66,6 +66,8 @@ export interface CombatPokemonState {
   status: string | null
   confusion: boolean
   moves: { name_fr: string; pp_current: number; pp_max: number; slot: number }[]
+  xp?: number
+  xp_to_next?: number
 }
 
 export default class CombatSession {
@@ -712,7 +714,10 @@ export default class CombatSession {
       ? Math.max(0, this.boss_timer_ms - (now - this.boss_started_at))
       : null
 
-    const mapPokemon = (p: CombatPokemon, idx: number): CombatPokemonState => ({
+    const xpToNext = (level: number): number =>
+      Math.max(1, Math.floor(Math.pow(level + 1, 3) * 0.8) - Math.floor(Math.pow(level, 3) * 0.8))
+
+    const mapPokemon = (p: CombatPokemon, isPlayer: boolean): CombatPokemonState => ({
       id: p.id,
       name_fr: p.name_fr,
       sprite_url: p.sprite_url,
@@ -728,6 +733,10 @@ export default class CombatSession {
         pp_max: m.pp,
         slot: i + 1,
       })),
+      ...(isPlayer && {
+        xp: p.experience ?? 0,
+        xp_to_next: xpToNext(p.level),
+      }),
     })
 
     return {
@@ -737,8 +746,8 @@ export default class CombatSession {
       battle_number: this.battle_number,
       is_boss: this.is_boss,
       boss_timer_remaining_ms,
-      player_team: this.player_team.map(mapPokemon),
-      enemy_team: this.enemy_team.map(mapPokemon),
+      player_team: this.player_team.map((p) => mapPokemon(p, true)),
+      enemy_team: this.enemy_team.map((p) => mapPokemon(p, false)),
       session_active: this.state === 'fighting',
     }
   }

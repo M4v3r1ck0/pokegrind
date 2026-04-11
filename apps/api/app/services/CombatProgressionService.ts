@@ -255,7 +255,7 @@ class CombatProgressionService {
           : raw_item.effect_value,
       } : null
 
-      return buildCombatPokemon({
+      const combat_pokemon = buildCombatPokemon({
         id: pp.id,
         species_id: pp.speciesId,
         name_fr: pp.nickname ?? species.nameFr,
@@ -277,6 +277,8 @@ class CombatProgressionService {
         item,
         item_name_fr: raw_item?.name_fr ?? undefined,
       })
+      combat_pokemon.experience = pp.xp ?? 0
+      return combat_pokemon
     })
   }
 
@@ -393,6 +395,17 @@ class CombatProgressionService {
         .where('id', pokemon.id)
         .update({ level, xp: current_xp })
 
+      // Synchroniser l'objet CombatPokemon en mémoire (snapshot temps réel)
+      const live = session.player_team.find((p) => p.id === pokemon.id)
+      if (live) {
+        live.level = level
+        live.experience = current_xp
+      }
+
+      const xp_to_next = Math.max(1,
+        Math.floor(Math.pow(level + 1, 3) * 0.8) - Math.floor(Math.pow(level, 3) * 0.8)
+      )
+
       if (level_ups.length > 0) {
         await this.learnMovesOnLevelUp(pokemon.id, pokemon.species_id, level_ups)
 
@@ -400,6 +413,15 @@ class CombatProgressionService {
           pokemon_id: pokemon.id,
           new_level: level_ups[level_ups.length - 1],
           levels_gained: level_ups.length,
+          xp: current_xp,
+          xp_to_next,
+        })
+      } else {
+        // Émettre la mise à jour XP même sans level-up
+        session.io.to(session.socket_room).emit('combat:xp_update', {
+          pokemon_id: pokemon.id,
+          xp: current_xp,
+          xp_to_next,
         })
       }
     }

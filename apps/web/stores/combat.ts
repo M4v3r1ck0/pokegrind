@@ -25,6 +25,8 @@ export interface CombatPokemonState {
   status: string | null
   confusion: boolean
   moves: CombatMoveState[]
+  xp?: number
+  xp_to_next?: number
 }
 
 export interface CombatLogEntry {
@@ -142,9 +144,20 @@ export const useCombatStore = defineStore('combat', {
       socket.on('combat:level_up', (event: any) => {
         const name = this.getPokemonName(event.pokemon_id)
         this.addLog(`⬆️ ${name} monte au niveau ${event.new_level} !`, 'info')
-        // Mettre à jour le niveau affiché dans l'équipe joueur
         const pokemon = this.player_team.find((p) => p.id === event.pokemon_id)
-        if (pokemon) pokemon.level = event.new_level
+        if (pokemon) {
+          pokemon.level = event.new_level
+          if (event.xp !== undefined) pokemon.xp = event.xp
+          if (event.xp_to_next !== undefined) pokemon.xp_to_next = event.xp_to_next
+        }
+      })
+
+      socket.on('combat:xp_update', (event: any) => {
+        const pokemon = this.player_team.find((p) => p.id === event.pokemon_id)
+        if (pokemon) {
+          if (event.xp !== undefined) pokemon.xp = event.xp
+          if (event.xp_to_next !== undefined) pokemon.xp_to_next = event.xp_to_next
+        }
       })
 
       // Stocker la référence module-level pour le guard

@@ -106,6 +106,9 @@ export interface CombatPokemon {
   is_mega_evolved?: boolean
   mega_name_fr?: string
   current_sprite_url?: string
+
+  // XP (joueurs uniquement)
+  experience?: number
 }
 
 export interface DamageResult {

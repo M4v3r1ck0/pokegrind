@@ -195,6 +195,17 @@ function formatTimer(ms: number): string {
               height="5px"
               :show-text="true"
             />
+            <!-- Barre XP -->
+            <div v-if="pokemon.xp !== undefined" class="xp-bar-wrap">
+              <UiProgressBar
+                :value="pokemon.xp ?? 0"
+                :max="pokemon.xp_to_next ?? 1"
+                color="#a78bfa"
+                height="3px"
+                :show-text="false"
+              />
+              <span class="xp-label">XP {{ pokemon.xp }}/{{ pokemon.xp_to_next }}</span>
+            </div>
             <!-- Move PP -->
             <div class="moves-pp">
               <span
@@ -477,6 +488,10 @@ function formatTimer(ms: number): string {
   letter-spacing: 0.08em;
   border-radius: var(--radius-lg);
 }
+
+/* XP bar */
+.xp-bar-wrap { margin-top: 2px; width: 100%; }
+.xp-label { font-size: 0.55rem; color: var(--color-text-muted); text-align: center; display: block; }
 
 /* PP chips */
 .moves-pp {
