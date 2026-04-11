@@ -33,8 +33,9 @@ COPY --from=builder /app/apps/api/build ./
 
 # node_modules déjà résolus dans le builder — évite de relancer pnpm install
 # sans le contexte monorepo (ce qui échouerait sur @pokegrind/shared@workspace:*)
+# shamefully-hoist=true hoiste tous les packages dans root node_modules/,
+# qui est ensuite copié à /app/node_modules/ — accessible depuis /app/bin/*.js
 COPY --from=builder /app/node_modules        ./node_modules
-COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/packages/shared     ./packages/shared
 COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
