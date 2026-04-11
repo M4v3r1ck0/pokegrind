@@ -34,13 +34,19 @@ export default class Floor extends BaseModel {
   @column()
   declare xpBase: number
 
-  @column()
+  @column({
+    prepare: (value) => JSON.stringify(value),
+    consume: (value) => (typeof value === 'string' ? JSON.parse(value) : value),
+  })
   declare enemyTypes: string[]
 
   @column()
   declare bossTrainerName: string | null
 
-  @column()
+  @column({
+    prepare: (value) => JSON.stringify(value),
+    consume: (value) => (typeof value === 'string' ? JSON.parse(value) : value),
+  })
   declare bossTeam: BossTeamEntry[] | null
 
   @column()

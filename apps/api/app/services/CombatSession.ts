@@ -138,18 +138,32 @@ export default class CombatSession {
   }
 
   private async loadEnemyPool(): Promise<void> {
-    const types = this.floor.enemyTypes as string[]
+    // Parser défensivement : supporte string JSON ou tableau direct
+    let types: string[] = []
+    const raw = this.floor.enemyTypes
+    if (Array.isArray(raw)) {
+      types = raw
+    } else if (typeof raw === 'string') {
+      try { types = JSON.parse(raw) } catch { types = [raw] }
+    }
+
     if (types.length === 0) return
 
     const rows = await db
       .from('pokemon_species')
-      .whereIn('type1', types)
-      .orWhereIn('type2', types)
-      .whereBetween('base_speed', [1, 999])
+      .where((q) => {
+        q.whereIn('type1', types).orWhereIn('type2', types)
+      })
       .select('id', 'name_fr', 'sprite_url', 'type1', 'type2')
-      .limit(60)
+      .limit(80)
 
-    this.enemy_pool = rows
+    this.enemy_pool = rows.map((r: any) => ({
+      id: r.id,
+      name_fr: r.name_fr,
+      sprite_url: r.sprite_url ?? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${r.id}.png`,
+      type1: r.type1,
+      type2: r.type2 ?? null,
+    }))
   }
 
   stop(): void {
