@@ -150,6 +150,25 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
 
     <!-- Toast notifications -->
     <UiToast />
+
+    <!-- Bottom navigation (mobile ≤640px) -->
+    <nav class="bottom-nav" aria-label="Navigation rapide mobile">
+      <NuxtLink to="/jeu/combat"  class="bottom-nav-item" :class="{ active: isActive('/jeu/combat') }">
+        <span>⚔️</span><span>Combat</span>
+      </NuxtLink>
+      <NuxtLink to="/jeu/equipe"  class="bottom-nav-item" :class="{ active: isActive('/jeu/equipe') }">
+        <span>👥</span><span>Équipe</span>
+      </NuxtLink>
+      <NuxtLink to="/jeu/pension" class="bottom-nav-item" :class="{ active: isActive('/jeu/pension') }">
+        <span>🥚</span><span>Pension</span>
+      </NuxtLink>
+      <NuxtLink to="/jeu/gacha"   class="bottom-nav-item" :class="{ active: isActive('/jeu/gacha') }">
+        <span>🎰</span><span>Gacha</span>
+      </NuxtLink>
+      <NuxtLink to="/jeu/pokedex" class="bottom-nav-item" :class="{ active: isActive('/jeu/pokedex') }">
+        <span>📖</span><span>Pokédex</span>
+      </NuxtLink>
+    </nav>
   </div>
 </template>
 
@@ -283,12 +302,15 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
 
 .mobile-toggle {
   display: none;
-  background: none;
-  border: none;
+  background: rgba(156,106,222,0.15);
+  border: 1px solid rgba(156,106,222,0.3);
+  border-radius: var(--radius-md);
   color: var(--color-text-primary);
   cursor: pointer;
-  padding: 4px;
+  padding: 6px 8px;
+  transition: var(--transition-fast);
 }
+.mobile-toggle:hover { background: rgba(156,106,222,0.3); }
 
 /* ─── Mobile menu ─────────────────────────────────────────────────── */
 .mobile-nav {
@@ -372,16 +394,48 @@ watch(() => route.path, () => { mobileMenuOpen.value = false })
 .drawer-leave-active { transition: all 0.15s ease; }
 .drawer-enter-from, .drawer-leave-to { opacity: 0; transform: translateY(-8px); }
 
+/* ─── Bottom nav (mobile) ──────────────────────────────────────────── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-sticky);
+  background: rgba(26,28,46,0.97);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 0;
+  text-decoration: none;
+  color: var(--color-text-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  transition: var(--transition-fast);
+}
+.bottom-nav-item span:first-child { font-size: 1.2rem; line-height: 1; }
+.bottom-nav-item.active { color: #b894f5; }
+.bottom-nav-item:hover  { color: var(--color-text-primary); }
+
 /* ─── Responsive ───────────────────────────────────────────────────── */
-@media (max-width: 1024px) {
+@media (max-width: 860px) {
   .header-nav { display: none; }
   .mobile-toggle { display: flex; }
   .gold-counter { display: none; }
 }
 
 @media (max-width: 640px) {
-  .game-main { padding: var(--space-4) var(--space-3); }
+  .game-main { padding: var(--space-4) var(--space-3) calc(var(--space-6) + 60px); }
   .mobile-nav-grid { grid-template-columns: repeat(3, 1fr); }
+  .bottom-nav { display: flex; }
 }
 
 @media (max-width: 375px) {
