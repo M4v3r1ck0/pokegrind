@@ -52,10 +52,10 @@ const pageTitle = computed(() => PAGE_TITLES[route.path] ?? 'PokeGrind')
   <div class="pg-root">
     <aside class="pg-sidebar">
       <!-- Logo -->
-      <div class="pg-logo">
+      <NuxtLink to="/jeu" class="pg-logo">
         <span class="pg-logo-icon">⚡</span>
         <span class="pg-logo-text">POKEGRIND</span>
-      </div>
+      </NuxtLink>
 
       <!-- Nav items -->
       <nav class="pg-nav">
@@ -144,7 +144,10 @@ const pageTitle = computed(() => PAGE_TITLES[route.path] ?? 'PokeGrind')
   gap: 8px;
   border-bottom: 1px solid rgba(255,255,255,0.05);
   flex-shrink: 0;
+  text-decoration: none;
+  transition: opacity 0.15s;
 }
+.pg-logo:hover { opacity: 0.8; }
 .pg-logo-icon { font-size: 18px; }
 .pg-logo-text {
   font-size: 15px;
