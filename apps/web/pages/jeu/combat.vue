@@ -238,6 +238,11 @@ function formatTimer(ms: number): string {
       </div>
     </UiModal>
 
+  <!-- FAB équipe — raccourci visible en permanence -->
+  <NuxtLink to="/jeu/equipe" class="equipe-fab" title="Gérer l'équipe">
+    👥 Équipe
+  </NuxtLink>
+
   </div>
 </template>
 
@@ -569,6 +574,31 @@ function formatTimer(ms: number): string {
 }
 
 .floor-boss-icon { font-size: 1rem; }
+
+/* ── FAB équipe ─────────────────────────────────────────────────────── */
+.equipe-fab {
+  position: fixed;
+  bottom: 80px;
+  left: var(--space-4);
+  z-index: 50;
+  background: rgba(79,195,247,0.15);
+  border: 1px solid rgba(79,195,247,0.3);
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #4fc3f7;
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.equipe-fab:hover {
+  background: rgba(79,195,247,0.25);
+  transform: translateY(-2px);
+}
 
 /* ── Responsive ─────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
