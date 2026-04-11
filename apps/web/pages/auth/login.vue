@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { navigateTo, useRoute, useRouter } from '#app'
 import { useAuthStore } from '~/stores/auth'
 
-definePageMeta({ layout: false })
+definePageMeta({ layout: 'default' })
 
 const auth = useAuthStore()
 const route = useRoute()

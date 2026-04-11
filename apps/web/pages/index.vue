@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth'
 
+definePageMeta({ layout: 'default' })
+
 const auth = useAuthStore()
 const router = useRouter()
 
