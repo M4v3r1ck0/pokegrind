@@ -118,6 +118,17 @@ export default class AuthController {
     // Créer le starter
     await StarterService.createStarterForPlayer(player.id, data.starter_id)
 
+    // Enregistrer le starter dans le Pokédex
+    import('#services/PokedexService').then(({ default: pokedexService }) => {
+      pokedexService.updateEntry({
+        player_id: player.id,
+        species_id: data.starter_id,
+        iv_total: 0,
+        is_shiny: false,
+        is_hatched: false,
+      }).catch(() => {})
+    }).catch(() => {})
+
     // Créer les 5 slots daycare vides
     await StarterService.createDaycareSlots(player.id)
 
