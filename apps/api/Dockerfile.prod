@@ -6,6 +6,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # ── Workspace manifests (layer cache) ────────────────────────────────────────
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY .npmrc ./
 
 # Manifests des packages nécessaires avant pnpm install
 COPY packages/shared/package.json ./packages/shared/
