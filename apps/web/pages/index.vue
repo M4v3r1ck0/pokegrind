@@ -18,227 +18,181 @@ onMounted(async () => {
   }
 })
 
-// Starfield canvas
-const canvasRef = ref<HTMLCanvasElement | null>(null)
-let animId: number
-
-interface Star {
-  x: number; y: number; size: number; speed: number; opacity: number; twinkle: number
-}
-
-onMounted(() => {
-  const canvas = canvasRef.value
-  if (!canvas) return
-  const ctx = canvas.getContext('2d')!
-
-  const resize = () => {
-    canvas.width  = window.innerWidth
-    canvas.height = window.innerHeight
-  }
-  resize()
-  window.addEventListener('resize', resize)
-
-  const stars: Star[] = Array.from({ length: 160 }, () => ({
-    x:       Math.random() * canvas.width,
-    y:       Math.random() * canvas.height,
-    size:    Math.random() * 1.8 + 0.2,
-    speed:   Math.random() * 0.3 + 0.05,
-    opacity: Math.random() * 0.7 + 0.3,
-    twinkle: Math.random() * Math.PI * 2,
-  }))
-
-  const draw = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    stars.forEach(s => {
-      s.twinkle += 0.02
-      const o = s.opacity * (0.7 + 0.3 * Math.sin(s.twinkle))
-      ctx.beginPath()
-      ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(255,255,255,${o})`
-      ctx.fill()
-      s.y += s.speed
-      if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width }
-    })
-    animId = requestAnimationFrame(draw)
-  }
-  draw()
-
-  onUnmounted(() => {
-    cancelAnimationFrame(animId)
-    window.removeEventListener('resize', resize)
-  })
-})
-
-// Floating starter Pokémon
-const starters = [
-  { id: 1,   name: 'Bulbizarre',   sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png',   delay: '0s',   x: '10%',  y: '40%' },
-  { id: 4,   name: 'Salamèche',    sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png',   delay: '0.8s', x: '25%',  y: '60%' },
-  { id: 7,   name: 'Carapuce',     sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png',   delay: '1.6s', x: '72%',  y: '45%' },
-  { id: 152,  name: 'Germignon',   sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/152.png', delay: '0.4s', x: '85%',  y: '62%' },
-  { id: 155,  name: 'Héricendre',  sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/155.png', delay: '2.1s', x: '15%',  y: '72%' },
-  { id: 158,  name: 'Kaiminus',    sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/158.png', delay: '1.2s', x: '78%',  y: '28%' },
+// 6 Pokémon flottants (Gen 5 GIFs) positionnés en arc
+const floatingPokemon = [
+  { id: 6,   name: 'Dracaufeu',  delay: '0s',    x: '5%',   y: '30%', size: '112px' },
+  { id: 9,   name: 'Tortank',    delay: '0.7s',  x: '18%',  y: '62%', size: '96px'  },
+  { id: 25,  name: 'Pikachu',    delay: '1.4s',  x: '30%',  y: '42%', size: '96px'  },
+  { id: 149, name: 'Dracolosse', delay: '0.3s',  x: '68%',  y: '35%', size: '120px' },
+  { id: 245, name: 'Suicune',    delay: '1.1s',  x: '80%',  y: '60%', size: '108px' },
+  { id: 384, name: 'Rayquaza',   delay: '1.8s',  x: '90%',  y: '28%', size: '128px' },
 ]
 
+function animGif(id: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`
+}
+
+function staticSprite(id: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
+}
+
+function onSpriteError(e: Event, id: number) {
+  const img = e.target as HTMLImageElement
+  img.src = staticSprite(id)
+}
+
 const features = [
-  { icon: '⚔️',  title: 'Combat Idle',     desc: 'Votre équipe combat automatiquement 24h/24. Montez les étages, battez les boss.' },
-  { icon: '🥚',  title: 'Pension & Élevage', desc: 'Faites éclore des Pokémon rares, débloquez des Talents Cachés, pêchez les Shinies.' },
-  { icon: '🎰',  title: 'Gacha Stratégique', desc: 'Système pity équitable. Épiques à 50 pulls, Légendaires à 200. Jamais d\'arnaques.' },
-  { icon: '💎',  title: '100% Farm-Only',   desc: 'Aucun achat réel. Les Gems se gagnent en jouant. Égalité totale entre joueurs.' },
-  { icon: '🏆',  title: 'Battle Frontier',  desc: 'Tour, Usine, Arène — modes compétitifs rotatifs avec classements hebdomadaires.' },
-  { icon: '✦',   title: 'Prestige × 50',    desc: '50 niveaux de prestige, chaque reset amplifie vos gains. La progression infinie.' },
+  { icon: '⚔️', title: 'Combat Automatique',   desc: 'Votre équipe combat 24h/24. Montez les étages, battez les boss de région.' },
+  { icon: '🎰', title: 'Invocations & Pity',    desc: 'Système gacha équitable. Épiques garantis à 50 pulls, Légendaires à 200.' },
+  { icon: '🥚', title: 'Pension & Élevage',     desc: 'Faites éclore des Pokémon rares, découvrez les Talents Cachés, pêchez les Shinies.' },
 ]
 </script>
 
 <template>
   <div class="landing">
-    <!-- Starfield background -->
-    <canvas ref="canvasRef" class="starfield" aria-hidden="true" />
 
-    <!-- Floating starters -->
-    <div class="starters-bg" aria-hidden="true">
+    <!-- ── Floating Pokémon (Gen 5 GIFs) ──────────────────────────────── -->
+    <div class="sprites-layer" aria-hidden="true">
       <img
-        v-for="s in starters"
-        :key="s.id"
-        :src="s.sprite"
-        :alt="s.name"
-        class="starter-float"
-        :style="{ left: s.x, top: s.y, animationDelay: s.delay, animationDuration: `${3 + Math.random() * 2}s` }"
+        v-for="p in floatingPokemon"
+        :key="p.id"
+        :src="animGif(p.id)"
+        :alt="p.name"
+        class="sprite-float"
+        :style="{
+          left: p.x,
+          top: p.y,
+          width: p.size,
+          height: p.size,
+          animationDelay: p.delay,
+        }"
+        @error="(e) => onSpriteError(e, p.id)"
       />
     </div>
 
-    <!-- Hero section -->
+    <!-- ── Hero ────────────────────────────────────────────────────────── -->
     <section class="hero">
       <div class="hero-inner">
-        <!-- Badge -->
-        <div class="hero-badge">
-          <span class="badge-dot" />
-          Jeu Idle Pokémon Navigateur
+
+        <!-- Logo -->
+        <div class="hero-eyebrow">
+          <span class="eyebrow-dot" />
+          Jeu Idle Pokémon — Navigateur
         </div>
 
-        <!-- Title -->
-        <h1 class="hero-title font-display">
-          <span class="title-main">PokeGrind</span>
-          <span class="title-sub">Gagnez pendant votre sommeil.</span>
-        </h1>
+        <h1 class="hero-logo font-display">⚡ POKEGRIND</h1>
+        <p class="hero-tagline">Le premier idle Pokémon français</p>
 
-        <!-- Description -->
         <p class="hero-desc">
-          Un RPG idle complet — combats automatiques, élevage de Pokémon, gacha stratégique
-          et prestige infini. Zéro pay-to-win, équité totale.
+          Combats automatiques, élevage, gacha stratégique et prestige infini.
+          Zéro pay-to-win — les gems se gagnent uniquement en jouant.
         </p>
 
-        <!-- CTA buttons -->
-        <div class="hero-cta">
-          <NuxtLink to="/auth/register" class="btn-cta-primary">
-            Commencer à jouer
+        <!-- CTA -->
+        <div class="hero-actions">
+          <NuxtLink to="/auth/register" class="btn-primary">
+            Jouer maintenant
             <span class="btn-arrow">→</span>
           </NuxtLink>
-          <NuxtLink to="/auth/login" class="btn-cta-ghost">
+          <NuxtLink to="/auth/login" class="btn-ghost">
             Se connecter
           </NuxtLink>
         </div>
 
-        <!-- Stats bar -->
-        <div class="hero-stats">
-          <div class="stat-item">
-            <span class="stat-num">1 025</span>
-            <span class="stat-label">Pokémon</span>
+        <!-- 3 stats bottom of hero -->
+        <div class="hero-pillars">
+          <div class="pillar">
+            <span class="pillar-icon">🎮</span>
+            <span class="pillar-label">Idle combat</span>
           </div>
-          <div class="stat-divider" />
-          <div class="stat-item">
-            <span class="stat-num">100+</span>
-            <span class="stat-label">Étages</span>
+          <span class="pillar-sep">|</span>
+          <div class="pillar">
+            <span class="pillar-icon">✨</span>
+            <span class="pillar-label">Gacha</span>
           </div>
-          <div class="stat-divider" />
-          <div class="stat-item">
-            <span class="stat-num">50</span>
-            <span class="stat-label">Niveaux Prestige</span>
-          </div>
-          <div class="stat-divider" />
-          <div class="stat-item">
-            <span class="stat-num">0€</span>
-            <span class="stat-label">Pay-to-win</span>
+          <span class="pillar-sep">|</span>
+          <div class="pillar">
+            <span class="pillar-icon">🥚</span>
+            <span class="pillar-label">Pension</span>
           </div>
         </div>
+
       </div>
 
-      <!-- Hero scroll hint -->
-      <div class="scroll-hint" aria-hidden="true">
-        <span>↓</span>
-      </div>
+      <div class="scroll-arrow" aria-hidden="true">↓</div>
     </section>
 
-    <!-- Features grid -->
+    <!-- ── Features (3 colonnes) ───────────────────────────────────────── -->
     <section class="features">
       <div class="features-inner">
         <h2 class="section-title font-display">Ce qui vous attend</h2>
         <div class="features-grid">
           <div v-for="f in features" :key="f.title" class="feature-card">
-            <span class="feature-icon">{{ f.icon }}</span>
-            <h3 class="feature-title">{{ f.title }}</h3>
-            <p class="feature-desc">{{ f.desc }}</p>
+            <span class="feat-icon">{{ f.icon }}</span>
+            <h3 class="feat-title">{{ f.title }}</h3>
+            <p class="feat-desc">{{ f.desc }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Final CTA -->
-    <section class="final-cta">
-      <div class="final-inner">
-        <h2 class="font-display final-title">Prêt à construire votre équipe ?</h2>
-        <p class="final-sub">Inscription gratuite. Aucune carte bancaire requise.</p>
-        <NuxtLink to="/auth/register" class="btn-cta-primary btn-lg">
+    <!-- ── CTA Final ───────────────────────────────────────────────────── -->
+    <section class="cta-final">
+      <div class="cta-inner">
+        <h2 class="cta-title font-display">Commencer l'aventure</h2>
+        <p class="cta-sub">Inscription gratuite. Aucune carte bancaire requise.</p>
+        <NuxtLink to="/auth/register" class="btn-primary btn-lg">
           Créer mon compte gratuitement
         </NuxtLink>
       </div>
     </section>
 
-    <!-- Footer -->
+    <!-- ── Footer ──────────────────────────────────────────────────────── -->
     <footer class="landing-footer">
-      <span class="font-display footer-logo">PokeGrind</span>
+      <span class="footer-logo font-display">PokeGrind</span>
       <span class="footer-sep">—</span>
-      <span class="footer-text">Fan game non-officiel. Pokémon © Nintendo / Game Freak.</span>
+      <span class="footer-legal">Fan game non-officiel. Pokémon © Nintendo / Game Freak.</span>
     </footer>
+
   </div>
 </template>
 
 <style scoped>
-/* ─── Base ──────────────────────────────────────────────────────────── */
+/* ── Base ─────────────────────────────────────────────────────────────────── */
 .landing {
   position: relative;
   min-height: 100dvh;
   overflow-x: hidden;
-  background: var(--color-bg-primary);
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(156,106,222,0.12), transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(230,57,70,0.08), transparent 50%),
+    #0d0e1a;
   color: var(--color-text-primary);
 }
 
-.starfield {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* ─── Floating starters ─────────────────────────────────────────────── */
-.starters-bg {
+/* ── Floating sprites ─────────────────────────────────────────────────────── */
+.sprites-layer {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
 }
 
-.starter-float {
+.sprite-float {
   position: absolute;
-  width: 80px;
-  height: 80px;
   object-fit: contain;
   image-rendering: pixelated;
-  opacity: 0.18;
-  animation: float var(--dur, 4s) ease-in-out infinite;
-  filter: blur(0.5px);
+  opacity: 0.22;
+  animation: float-updown 4s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
 }
 
-/* ─── Hero ──────────────────────────────────────────────────────────── */
+@keyframes float-updown {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
   z-index: 2;
@@ -246,259 +200,271 @@ const features = [
   flex-direction: column;
   align-items: center;
   min-height: 100dvh;
-  padding: 80px var(--space-6) var(--space-12);
+  padding: 100px 24px 60px;
 }
 
 .hero-inner {
-  max-width: 700px;
+  max-width: 680px;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-6);
+  gap: 28px;
   text-align: center;
 }
 
-.hero-badge {
+/* Eyebrow badge */
+.hero-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 16px;
-  border-radius: var(--radius-full);
-  border: 1px solid rgba(156,106,222,0.4);
-  background: rgba(156,106,222,0.1);
-  font-size: 0.8rem;
+  padding: 5px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(156,106,222,0.35);
+  background: rgba(156,106,222,0.08);
+  font-size: 0.78rem;
   font-weight: 700;
   color: #b894f5;
-  animation: scale-in 0.5s ease;
+  letter-spacing: 0.04em;
 }
 
-.badge-dot {
+.eyebrow-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: #9c6ade;
-  animation: pulse-gold 2s ease-in-out infinite;
+  animation: pulse-dot 2s ease-in-out infinite;
 }
 
-.hero-title {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  animation: scale-in 0.6s ease 0.1s both;
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
 }
 
-.title-main {
-  font-size: clamp(3.5rem, 10vw, 6rem);
+/* Logo */
+.hero-logo {
+  font-size: clamp(3.5rem, 10vw, 5.5rem);
   letter-spacing: 0.06em;
-  background: linear-gradient(135deg, #ffd700 0%, #ffb300 40%, #ff8c00 100%);
+  line-height: 1;
+  background: linear-gradient(135deg, #ffd700 0%, #9c6ade 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 30px rgba(255,215,0,0.4));
-  line-height: 1.0;
+  text-shadow: none;
+  filter: drop-shadow(0 0 40px rgba(255,215,0,0.3));
+  margin: 0;
 }
 
-.title-sub {
-  font-size: clamp(1.2rem, 3.5vw, 1.8rem);
-  letter-spacing: 0.04em;
+.hero-tagline {
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
   color: var(--color-text-secondary);
-  -webkit-text-fill-color: initial;
   font-family: var(--font-display);
+  letter-spacing: 0.05em;
+  margin: 0;
 }
 
 .hero-desc {
-  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
   color: var(--color-text-secondary);
   line-height: 1.7;
-  max-width: 540px;
-  animation: slide-down 0.6s ease 0.3s both;
+  max-width: 520px;
+  margin: 0;
 }
 
-/* CTA buttons */
-.hero-cta {
+/* Buttons */
+.hero-actions {
   display: flex;
-  gap: var(--space-4);
+  gap: 16px;
   flex-wrap: wrap;
   justify-content: center;
-  animation: slide-down 0.6s ease 0.4s both;
 }
 
-.btn-cta-primary {
+.btn-primary {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: 14px 32px;
-  border-radius: var(--radius-full);
+  gap: 8px;
+  padding: 16px 40px;
+  border-radius: 999px;
   font-family: var(--font-primary);
   font-weight: 800;
   font-size: 1rem;
   text-decoration: none;
-  background: linear-gradient(135deg, #6c2ed4, #9c6ade);
+  background: linear-gradient(135deg, #e63946, #9c6ade);
   color: #fff;
-  box-shadow: var(--shadow-glow-purple), 0 4px 16px rgba(0,0,0,0.4);
-  transition: var(--transition-base);
+  box-shadow: 0 0 20px rgba(230,57,70,0.3), 0 4px 16px rgba(0,0,0,0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.btn-cta-primary:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 0 24px rgba(156,106,222,0.7), 0 8px 24px rgba(0,0,0,0.4);
+
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 32px rgba(156,106,222,0.5), 0 8px 24px rgba(0,0,0,0.4);
 }
-.btn-cta-primary.btn-lg { padding: 16px 40px; font-size: 1.1rem; }
+
+.btn-primary.btn-lg { padding: 18px 48px; font-size: 1.1rem; }
 
 .btn-arrow { transition: transform 0.2s ease; }
-.btn-cta-primary:hover .btn-arrow { transform: translateX(4px); }
+.btn-primary:hover .btn-arrow { transform: translateX(4px); }
 
-.btn-cta-ghost {
+.btn-ghost {
   display: inline-flex;
   align-items: center;
-  padding: 14px 28px;
-  border-radius: var(--radius-full);
+  padding: 16px 32px;
+  border-radius: 999px;
   font-family: var(--font-primary);
   font-weight: 700;
   font-size: 1rem;
   text-decoration: none;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.18);
   color: var(--color-text-secondary);
-  transition: var(--transition-base);
+  transition: all 0.2s ease;
 }
-.btn-cta-ghost:hover {
+
+.btn-ghost:hover {
   border-color: rgba(255,255,255,0.4);
   color: var(--color-text-primary);
   background: rgba(255,255,255,0.05);
 }
 
-/* Stats */
-.hero-stats {
+/* Pillars */
+.hero-pillars {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-  justify-content: center;
-  padding: var(--space-4) var(--space-6);
-  border-radius: var(--radius-xl);
+  gap: 24px;
+  padding: 16px 32px;
+  border-radius: 999px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
-  animation: slide-down 0.6s ease 0.5s both;
 }
 
-.stat-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.stat-num { font-family: var(--font-display); font-size: 1.6rem; color: var(--color-accent-yellow); letter-spacing: 0.04em; }
-.stat-label { font-size: 0.72rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
-.stat-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.1); }
+.pillar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-/* Scroll hint */
-.scroll-hint {
+.pillar-icon { font-size: 1.2rem; }
+.pillar-label { font-size: 0.9rem; font-weight: 700; color: var(--color-text-secondary); letter-spacing: 0.02em; }
+.pillar-sep { color: rgba(255,255,255,0.15); font-size: 1rem; }
+
+/* Scroll arrow */
+.scroll-arrow {
   position: absolute;
-  bottom: var(--space-6);
+  bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
   color: var(--color-text-muted);
-  font-size: 1.2rem;
-  animation: float 2s ease-in-out infinite;
+  font-size: 1.4rem;
+  animation: float-updown 2s ease-in-out infinite;
 }
 
-/* ─── Features ──────────────────────────────────────────────────────── */
+/* ── Features ─────────────────────────────────────────────────────────────── */
 .features {
   position: relative;
   z-index: 2;
-  padding: var(--space-16) var(--space-6);
-  background: rgba(37,39,66,0.6);
+  padding: 80px 24px;
+  background: rgba(26,28,46,0.85);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   backdrop-filter: blur(4px);
-  border-top: 1px solid rgba(255,255,255,0.07);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
 .features-inner {
-  max-width: 1100px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
 .section-title {
   text-align: center;
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: clamp(2rem, 4vw, 2.8rem);
   letter-spacing: 0.05em;
   color: var(--color-text-primary);
-  margin-bottom: var(--space-10);
+  margin: 0 0 48px;
 }
 
 .features-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-6);
+  gap: 24px;
 }
 
 .feature-card {
   background: var(--color-bg-secondary);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--radius-xl);
-  padding: var(--space-6);
-  transition: var(--transition-base);
+  border-radius: 20px;
+  padding: 32px 24px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 12px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
 .feature-card:hover {
   transform: translateY(-4px);
   border-color: rgba(156,106,222,0.4);
-  box-shadow: var(--shadow-glow-purple);
+  box-shadow: 0 0 20px rgba(156,106,222,0.15);
 }
 
-.feature-icon { font-size: 2rem; line-height: 1; }
-.feature-title { font-family: var(--font-primary); font-weight: 800; font-size: 1.05rem; color: var(--color-text-primary); }
-.feature-desc  { font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.6; }
+.feat-icon  { font-size: 2.4rem; line-height: 1; }
+.feat-title { font-weight: 800; font-size: 1.05rem; color: var(--color-text-primary); }
+.feat-desc  { font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.65; }
 
-/* ─── Final CTA ─────────────────────────────────────────────────────── */
-.final-cta {
+/* ── CTA Final ────────────────────────────────────────────────────────────── */
+.cta-final {
   position: relative;
   z-index: 2;
-  padding: var(--space-16) var(--space-6);
+  padding: 80px 24px;
+  background: linear-gradient(135deg, rgba(255,215,0,0.04), rgba(156,106,222,0.06));
   text-align: center;
 }
 
-.final-inner {
+.cta-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
-.final-title {
+.cta-title {
   font-size: clamp(2rem, 5vw, 3rem);
   letter-spacing: 0.04em;
   background: linear-gradient(135deg, #ffd700, #9c6ade);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  margin: 0;
 }
 
-.final-sub { color: var(--color-text-secondary); font-size: 1rem; }
+.cta-sub { color: var(--color-text-secondary); font-size: 1rem; margin: 0; }
 
-/* ─── Footer ─────────────────────────────────────────────────────────── */
+/* ── Footer ───────────────────────────────────────────────────────────────── */
 .landing-footer {
   position: relative;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-6);
-  border-top: 1px solid rgba(255,255,255,0.07);
+  gap: 12px;
+  padding: 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
   color: var(--color-text-muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
-.footer-logo { font-size: 1.1rem; color: var(--color-accent-yellow); letter-spacing: 0.06em; }
+.footer-logo  { font-size: 1rem; color: var(--color-accent-yellow); letter-spacing: 0.06em; }
+.footer-sep   { opacity: 0.4; }
+.footer-legal { opacity: 0.7; }
 
-/* ─── Responsive ─────────────────────────────────────────────────────── */
+/* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .features-grid { grid-template-columns: repeat(2, 1fr); }
-  .hero-stats { gap: var(--space-3); }
-  .stat-divider { display: none; }
+  .features-grid { grid-template-columns: 1fr; }
+  .hero-pillars  { gap: 16px; padding: 12px 20px; }
+  .pillar-label  { font-size: 0.82rem; }
 }
 
 @media (max-width: 480px) {
-  .features-grid { grid-template-columns: 1fr; }
-  .starters-bg { display: none; }
-  .btn-cta-primary, .btn-cta-ghost { padding: 12px 24px; font-size: 0.9rem; }
+  .sprites-layer { display: none; }
+  .btn-primary, .btn-ghost { padding: 14px 24px; font-size: 0.9rem; }
+  .hero-pillars { flex-wrap: wrap; justify-content: center; }
+  .pillar-sep { display: none; }
 }
 </style>
