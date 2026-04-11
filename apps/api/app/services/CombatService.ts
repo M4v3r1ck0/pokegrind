@@ -500,14 +500,19 @@ export function buildCombatPokemon(params: {
 
 /**
  * Calcule le délai avant la prochaine action en ms.
- * Formule : 3000ms ÷ (speed ÷ 100)
+ * Formule révisée — cap entre 500ms et 2000ms :
+ * - speed=50  → ~1500ms (baseline confortable)
+ * - speed=100 → ~750ms  (rapide)
+ * - speed=150 → ~500ms  (très rapide, min)
+ * - speed=12  → 2000ms  (bas niveau, plafonné)
  * Paralysie : speed effective ÷ 2
  */
 export function calcActionDelay(pokemon: CombatPokemon): number {
   let speed = pokemon.effective_speed * getStageMultiplier(pokemon.stat_modifiers.speed)
   if (pokemon.status?.type === 'paralysis') speed *= 0.5
   speed = Math.max(1, speed)
-  return Math.round(3000 / (speed / 100))
+  const raw = Math.round((1500 * 50) / speed)
+  return Math.min(2000, Math.max(500, raw))
 }
 
 // ─── Sélection du move ───────────────────────────────────────────────────────
