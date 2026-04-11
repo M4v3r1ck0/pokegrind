@@ -1,7 +1,15 @@
 import db from '@adonisjs/lucid/services/db'
+import ItemSeeder from './ItemSeeder.js'
 
 export default class GoldShopSeeder {
   async run() {
+    // Dépend de ItemSeeder — le déclencher si la table items est vide
+    const count = await db.from('items').count('* as total').first()
+    if (Number(count?.total ?? 0) === 0) {
+      console.log('[GoldShopSeeder] Table items vide — exécution de ItemSeeder en prérequis...')
+      await new ItemSeeder().run()
+    }
+
     const items = await db.from('items').select('id', 'name_fr')
     const id = (name: string): number => {
       const item = items.find(i => i.name_fr === name)

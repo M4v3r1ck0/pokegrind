@@ -107,29 +107,18 @@ const RAID_BOSSES = [
 export default class RaidBossSeeder extends BaseSeeder {
   async run() {
     for (const boss of RAID_BOSSES) {
-      await db
-        .table('raid_bosses')
-        .insert({
+      const existing = await db
+        .from('raid_bosses')
+        .where('species_id', boss.species_id)
+        .first()
+
+      if (!existing) {
+        await db.table('raid_bosses').insert({
           ...boss,
           created_at: new Date(),
           updated_at: new Date(),
         })
-        .onConflict(db.raw("(species_id) WHERE is_active = true"))
-        .ignore()
-        .catch(async () => {
-          // Fallback : upsert via delete+insert si le onConflict n'est pas supporté
-          const existing = await db
-            .from('raid_bosses')
-            .where('species_id', boss.species_id)
-            .first()
-          if (!existing) {
-            await db.table('raid_bosses').insert({
-              ...boss,
-              created_at: new Date(),
-              updated_at: new Date(),
-            })
-          }
-        })
+      }
     }
     console.log(`[RaidBossSeeder] ${RAID_BOSSES.length} raid bosses seedés.`)
   }

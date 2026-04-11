@@ -41,12 +41,12 @@ const DEFAULT_CONFIG = [
 export default class GameConfigSeeder extends BaseSeeder {
   async run() {
     for (const cfg of DEFAULT_CONFIG) {
-      await db.table('game_config').insert({
-        key: cfg.key,
-        value: JSON.stringify(cfg.value),
-        description_fr: cfg.description_fr,
-        updated_at: new Date(),
-      }).onConflict('key').ignore()
+      await db.rawQuery(
+        `INSERT INTO game_config (key, value, description_fr, updated_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT (key) DO NOTHING`,
+        [cfg.key, JSON.stringify(cfg.value), cfg.description_fr, new Date()]
+      )
     }
 
     console.log(`[GameConfigSeeder] ${DEFAULT_CONFIG.length} clés de configuration insérées`)
