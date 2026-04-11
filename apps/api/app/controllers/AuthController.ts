@@ -59,6 +59,7 @@ function serializePlayer(player: Player, upgrades: string[] = []) {
     username: player.username,
     email: player.email,
     discord_id: player.discordId,
+    role: player.role,
     gems: player.gems,
     gold: player.gold,
     frontier_points: player.frontierPoints,
