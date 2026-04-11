@@ -49,6 +49,7 @@ export interface SessionSnapshot {
   battle_number: number
   is_boss: boolean
   boss_timer_remaining_ms: number | null
+  boss_trainer_name: string | null
   player_team: CombatPokemonState[]
   enemy_team: CombatPokemonState[]
   session_active: boolean
@@ -92,6 +93,11 @@ export default class CombatSession {
   private mega_evolved_this_battle: boolean = false
   private mega_data_cache: any[] | null = null
 
+  // Pool d'espèces ennemies réelles (chargé depuis pokemon_species au démarrage)
+  private enemy_pool: Array<{ id: number; name_fr: string; sprite_url: string; type1: string; type2: string | null }> = []
+  // Cache de l'équipe boss pré-chargée (évite une requête synchrone dans loadBattle)
+  private boss_team_cache: CombatPokemon[] = []
+
   // Callback pour les récompenses (injection depuis CombatProgressionService)
   onVictoryBattle?: (gold: number, xp: number) => void
   onBossDefeated?: (floor_number: number) => Promise<void>
@@ -117,9 +123,33 @@ export default class CombatSession {
   // ─── Démarrage ────────────────────────────────────────────────────────────
 
   start(): void {
-    this.loadBattle(this.battle_number)
-    this.state = 'fighting'
-    this.scheduleTick()
+    this.loadEnemyPool()
+      .then(async () => {
+        this.boss_team_cache = await this.buildBossTeamAsync()
+        this.loadBattle(this.battle_number)
+        this.state = 'fighting'
+        this.scheduleTick()
+      })
+      .catch(() => {
+        this.loadBattle(this.battle_number)
+        this.state = 'fighting'
+        this.scheduleTick()
+      })
+  }
+
+  private async loadEnemyPool(): Promise<void> {
+    const types = this.floor.enemyTypes as string[]
+    if (types.length === 0) return
+
+    const rows = await db
+      .from('pokemon_species')
+      .whereIn('type1', types)
+      .orWhereIn('type2', types)
+      .whereBetween('base_speed', [1, 999])
+      .select('id', 'name_fr', 'sprite_url', 'type1', 'type2')
+      .limit(60)
+
+    this.enemy_pool = rows
   }
 
   stop(): void {
@@ -154,7 +184,9 @@ export default class CombatSession {
     this.mega_evolved_this_battle = false
 
     if (this.is_boss) {
-      this.enemy_team = this.buildBossTeam()
+      this.enemy_team = this.boss_team_cache.length > 0
+        ? this.boss_team_cache
+        : this.buildRandomEnemyTeam()
       this.boss_started_at = Date.now()
     } else {
       this.enemy_team = this.buildRandomEnemyTeam()
@@ -195,7 +227,11 @@ export default class CombatSession {
   }
 
   private buildGenericEnemy(id: string, level: number, index: number): CombatPokemon {
-    // Ennemi générique basé sur le niveau de l'étage
+    // Choisir une espèce réelle si le pool est chargé
+    const species = this.enemy_pool.length > 0
+      ? this.enemy_pool[Math.floor(Math.random() * this.enemy_pool.length)]
+      : null
+
     const hp_base = 45 + level
     const atk_base = 35 + Math.floor(level * 0.8)
     const def_base = 35 + Math.floor(level * 0.7)
@@ -205,17 +241,17 @@ export default class CombatSession {
     const effective_stat = Math.floor((Math.floor(((2 * atk_base + 15) * level) / 100) + 5) * 1.0)
 
     const types = this.floor.enemyTypes as string[]
-    const type1 = (types[index % types.length] ?? 'normal') as CombatPokemon['type1']
+    const type1 = (species?.type1 ?? types[index % types.length] ?? 'normal') as CombatPokemon['type1']
 
     return {
       id,
-      species_id: 0,
-      name_fr: `Ennemi Niv.${level}`,
+      species_id: species?.id ?? 0,
+      name_fr: species ? species.name_fr : `Ennemi Niv.${level}`,
       level,
       nature: 'hardy',
       ivs: { hp: 15, atk: 15, def: 15, spatk: 15, spdef: 15, speed: 15 },
       type1,
-      type2: null,
+      type2: (species?.type2 ?? null) as CombatPokemon['type2'] | null,
       base_hp: hp_base,
       base_atk: atk_base,
       base_def: def_base,
@@ -223,7 +259,9 @@ export default class CombatSession {
       base_spdef: def_base,
       base_speed: speed_base,
       moves: [this.buildBasicMove(type1, level)],
-      sprite_url: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${(index % 151) + 1 + Math.floor(level / 10)}.png`,
+      sprite_url: species
+        ? (species.sprite_url ?? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${species.id}.png`)
+        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${(index % 151) + 1}.png`,
       is_shiny: false,
       max_hp,
       current_hp: max_hp,
@@ -239,6 +277,57 @@ export default class CombatSession {
       pp_remaining: [35],
       next_action_at: 0,
     }
+  }
+
+  private async buildBossTeamAsync(): Promise<CombatPokemon[]> {
+    if (!this.floor.bossTeam || this.floor.bossTeam.length === 0) {
+      return this.buildRandomEnemyTeam()
+    }
+
+    const speciesIds = this.floor.bossTeam.map((e: any) => e.species_id)
+    const speciesRows = await db
+      .from('pokemon_species')
+      .whereIn('id', speciesIds)
+      .select('id', 'name_fr', 'sprite_url', 'type1', 'type2',
+              'base_hp', 'base_atk', 'base_def', 'base_spatk', 'base_spdef', 'base_speed')
+
+    const speciesMap = new Map(speciesRows.map((s: any) => [s.id, s]))
+
+    return this.floor.bossTeam.map((entry: any, i: number) => {
+      const sp = speciesMap.get(entry.species_id)
+      const level = entry.level ?? this.floor.maxLevel
+      const hp_base = sp?.base_hp ?? 45
+      const atk_base = sp?.base_atk ?? 45
+      const def_base = sp?.base_def ?? 40
+      const speed_base = sp?.base_speed ?? 40
+      const max_hp = Math.floor(((2 * hp_base + 31) * level) / 100) + level + 10
+      const eff_atk = Math.floor(Math.floor(((2 * atk_base + 31) * level) / 100) + 5)
+      const eff_def = Math.floor(Math.floor(((2 * def_base + 31) * level) / 100) + 5)
+      const eff_spd = Math.floor(Math.floor(((2 * speed_base + 31) * level) / 100) + 5)
+
+      return {
+        id: `boss_${i}`,
+        species_id: entry.species_id,
+        name_fr: sp?.name_fr ?? `Boss Niv.${level}`,
+        level,
+        nature: 'hardy' as const,
+        ivs: { hp: 31, atk: 31, def: 31, spatk: 31, spdef: 31, speed: 31 },
+        type1: (sp?.type1 ?? 'normal') as CombatPokemon['type1'],
+        type2: (sp?.type2 ?? null) as CombatPokemon['type2'] | null,
+        base_hp: hp_base, base_atk: atk_base, base_def: def_base,
+        base_spatk: atk_base, base_spdef: def_base, base_speed: speed_base,
+        moves: [this.buildBasicMove(sp?.type1 ?? 'normal', level)],
+        sprite_url: sp?.sprite_url ?? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${entry.species_id}.png`,
+        is_shiny: false,
+        max_hp, current_hp: max_hp,
+        effective_atk: eff_atk, effective_def: eff_def,
+        effective_spatk: eff_atk, effective_spdef: eff_def,
+        effective_speed: eff_spd,
+        status: null, confusion: null,
+        stat_modifiers: { atk: 0, def: 0, spatk: 0, spdef: 0, speed: 0, evasion: 0, accuracy: 0 },
+        current_move_index: 0, pp_remaining: [35], next_action_at: 0,
+      } as unknown as CombatPokemon
+    })
   }
 
   private buildBasicMove(type: string, level: number): CombatMove {
@@ -587,6 +676,7 @@ export default class CombatSession {
         xp_earned: xp,
         next_battle: 1,
         is_boss_next: false,
+        boss_trainer_name: this.floor.bossTrainerName ?? null,
       })
 
       // Callback boss defeated (async — gestion en dehors du tick)
@@ -626,6 +716,7 @@ export default class CombatSession {
       this.loadBattle(1)
       this.state = 'fighting'
       this.scheduleTick()
+      this.io.to(this.socket_room).emit('combat:full_state', this.toSnapshot())
     }, 3000)
   }
 
@@ -666,6 +757,7 @@ export default class CombatSession {
         this.loadBattle(1)
         this.state = 'fighting'
         this.scheduleTick()
+        this.io.to(this.socket_room).emit('combat:full_state', this.toSnapshot())
       }, 3000)
     }).catch(() => {
       // Fallback sans auto_farm
@@ -678,6 +770,7 @@ export default class CombatSession {
         this.loadBattle(1)
         this.state = 'fighting'
         this.scheduleTick()
+        this.io.to(this.socket_room).emit('combat:full_state', this.toSnapshot())
       }, 3000)
     })
   }
@@ -712,7 +805,7 @@ export default class CombatSession {
       : null
 
     const xpToNext = (level: number): number =>
-      Math.max(1, Math.floor(Math.pow(level + 1, 3) * 0.8) - Math.floor(Math.pow(level, 3) * 0.8))
+      Math.max(1, Math.floor(Math.pow(level + 1, 3) * 0.1) - Math.floor(Math.pow(level, 3) * 0.1))
 
     const mapPokemon = (p: CombatPokemon, isPlayer: boolean): CombatPokemonState => ({
       id: p.id,
@@ -743,6 +836,7 @@ export default class CombatSession {
       battle_number: this.battle_number,
       is_boss: this.is_boss,
       boss_timer_remaining_ms,
+      boss_trainer_name: this.is_boss ? (this.floor.bossTrainerName ?? null) : null,
       player_team: this.player_team.map((p) => mapPokemon(p, true)),
       enemy_team: this.enemy_team.map((p) => mapPokemon(p, false)),
       session_active: this.state === 'fighting',
