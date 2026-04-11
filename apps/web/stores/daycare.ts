@@ -82,6 +82,8 @@ export const useDaycareStore = defineStore('daycare', {
         const api = nuxtApp.$api as any
         const { data } = await api.get('/player/daycare')
         this.applyState(data)
+      } catch {
+        // silencieux — la page reste lisible avec l'état actuel
       } finally {
         this.is_loading = false
       }
@@ -138,10 +140,15 @@ export const useDaycareStore = defineStore('daycare', {
 
     // ── File d'attente ───────────────────────────────────────────────────
     async fetchQueue() {
-      const nuxtApp = useNuxtApp()
-      const api = nuxtApp.$api as any
-      const { data } = await api.get('/player/daycare/queue')
-      this.queue = data.queue ?? []
+      try {
+        const nuxtApp = useNuxtApp()
+        const api = nuxtApp.$api as any
+        const { data } = await api.get('/player/daycare/queue')
+        this.queue = data.queue ?? []
+      } catch {
+        this.queue = []
+        this.queue_active = false
+      }
     },
 
     async addToQueue(pokemon_id: string, partner_id?: string, target_slot?: number) {
