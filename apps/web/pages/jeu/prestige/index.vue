@@ -48,7 +48,7 @@ async function finalizePrestige() {
     result.value = await prestige.performPrestige()
     confirm_step.value = 0
     // Mettre à jour le profil joueur
-    await auth.fetchProfile?.()
+    await auth.fetchMe()
   } catch (err: any) {
     error_msg.value = err.response?.data?.error ?? 'Erreur lors du prestige'
   } finally {

@@ -12,7 +12,7 @@ export interface GachaResultItem {
     nature: string
     ivs: { hp: number; atk: number; def: number; spatk: number; spdef: number; speed: number }
     sprite_url: string | null
-    sprite_shin_url: string | null
+    sprite_shiny_url: string | null
   }
   is_new_species: boolean
   pity_epic_current: number

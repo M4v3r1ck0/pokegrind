@@ -32,10 +32,10 @@ const MYTHIC_IDS = [
 export interface GachaResult {
   pokemon: {
     id: string
-    speciesId: number
-    nameFr: string
+    species_id: number
+    name_fr: string
     rarity: PokemonRarity
-    isShiny: boolean
+    is_shiny: boolean
     nature: string
     ivs: {
       hp: number
@@ -45,12 +45,12 @@ export interface GachaResult {
       spdef: number
       speed: number
     }
-    spriteUrl: string | null
-    spriteShinyUrl: string | null
+    sprite_url: string | null
+    sprite_shiny_url: string | null
   }
-  isNewSpecies: boolean
-  pityEpicCurrent: number
-  pityLegendaryCurrent: number
+  is_new_species: boolean
+  pity_epic_current: number
+  pity_legendary_current: number
 }
 
 export default class GachaService {
@@ -257,18 +257,18 @@ export default class GachaService {
       results.push({
         pokemon: {
           id: pokemon.id,
-          speciesId: species.id,
-          nameFr: species.nameFr,
+          species_id: species.id,
+          name_fr: species.nameFr,
           rarity: species.rarity,
-          isShiny,
+          is_shiny: isShiny,
           nature,
           ivs,
-          spriteUrl: species.spriteUrl,
-          spriteShinyUrl: species.spriteShinyUrl ?? null,
+          sprite_url: species.spriteUrl ?? null,
+          sprite_shiny_url: species.spriteShinyUrl ?? null,
         },
-        isNewSpecies,
-        pityEpicCurrent: currentPityEpic,
-        pityLegendaryCurrent: currentPityLegendary,
+        is_new_species: isNewSpecies,
+        pity_epic_current: currentPityEpic,
+        pity_legendary_current: currentPityLegendary,
       })
     }
 

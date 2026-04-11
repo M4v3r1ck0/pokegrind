@@ -44,14 +44,14 @@ onMounted(async () => {
     combat.initCombat(auth.player.id)
     try {
       const api = nuxtApp.$api as any
-      const { data } = await api.post('/api/combat/start')
+      const { data } = await api.post('/combat/start')
       combat.applyFullState(data)
     } catch (e) {
       console.error('Erreur démarrage combat:', e)
     }
     try {
       const api = nuxtApp.$api as any
-      const { data } = await api.get('/api/combat/floors')
+      const { data } = await api.get('/combat/floors')
       availableFloors.value = data.floors
     } catch (e) {
       console.error('Erreur chargement étages:', e)

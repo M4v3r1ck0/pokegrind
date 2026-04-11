@@ -58,7 +58,7 @@ async function enterTower() {
       </div>
       <div v-if="status" class="floor-badge">
         <span class="floor-label">Étage atteint</span>
-        <span class="floor-num">{{ status.highest_floor }}</span>
+        <span class="floor-num">{{ status.max_floor_reached }}</span>
       </div>
     </div>
 
@@ -74,7 +74,7 @@ async function enterTower() {
         <div class="progress-card-top">
           <div class="progress-info">
             <p class="progress-label">Progression globale</p>
-            <p class="progress-sub">{{ status.total_kills.toLocaleString('fr-FR') }} ennemis vaincus</p>
+            <p class="progress-sub">{{ status.total_kills_tower.toLocaleString('fr-FR') }} ennemis vaincus</p>
           </div>
           <button class="btn-enter" @click="enterTower">
             ⚔️ Entrer dans la Tour
@@ -125,9 +125,9 @@ async function enterTower() {
             v-for="ms in tower.milestones"
             :key="ms.floor"
             class="milestone-card"
-            :class="{ 'milestone-done': status.highest_floor >= ms.floor }"
+            :class="{ 'milestone-done': status.max_floor_reached >= ms.floor }"
           >
-            <span class="ms-status">{{ status.highest_floor >= ms.floor ? '✅' : '🔒' }}</span>
+            <span class="ms-status">{{ status.max_floor_reached >= ms.floor ? '✅' : '🔒' }}</span>
             <span class="ms-floor font-display">{{ ms.floor }}</span>
             <span class="ms-reward">{{ ms.reward_description }}</span>
           </div>
