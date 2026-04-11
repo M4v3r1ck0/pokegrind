@@ -32,6 +32,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Combat',       icon: '⚔️',  to: '/jeu/combat',           accent: 'red' },
+  { label: 'Équipe',       icon: '👥',  to: '/jeu/equipe',           accent: 'blue' },
   { label: 'Pension',      icon: '🥚',  to: '/jeu/pension',          accent: 'green' },
   { label: 'Gacha',        icon: '🎰',  to: '/jeu/gacha',            accent: 'purple' },
   { label: 'Inventaire',   icon: '🎒',  to: '/jeu/items',            accent: 'blue' },

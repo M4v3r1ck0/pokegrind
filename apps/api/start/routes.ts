@@ -29,6 +29,7 @@ const AdminRaidController = () => import('#controllers/AdminRaidController')
 const GigantamaxController = () => import('#controllers/GigantamaxController')
 const AdminV3Controller = () => import('#controllers/AdminV3Controller')
 const SwaggerController = () => import('#controllers/SwaggerController')
+const TeamController = () => import('#controllers/TeamController')
 
 /*
 |--------------------------------------------------------------------------
@@ -120,6 +121,17 @@ router
         router.get('/team', [InventoryController, 'team'])
       })
       .prefix('/player')
+      .use(middleware.auth())
+
+    // ── Gestion équipe + movesets (auth requise) ──────────────────────
+    router
+      .group(() => {
+        router.get('/', [TeamController, 'index'])
+        router.post('/slot', [TeamController, 'setSlot'])
+        router.get('/:id/moves', [TeamController, 'availableMoves'])
+        router.put('/:id/moves', [TeamController, 'updateMoves'])
+      })
+      .prefix('/team')
       .use(middleware.auth())
 
     // ── Boutique gems (auth requise) ───────────────────────────────────
