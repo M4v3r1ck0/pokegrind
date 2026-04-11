@@ -98,6 +98,13 @@ function fallbackSprite(event: Event) {
 }
 
 const detail = computed(() => pokedex.selected_entry)
+
+const safeProgress = computed(() => {
+  const owned = pokedex.stats?.owned ?? 0
+  const total = pokedex.stats?.total ?? 0
+  if (total === 0) return 0
+  return Math.round((owned / total) * 100)
+})
 </script>
 
 <template>
@@ -120,12 +127,10 @@ const detail = computed(() => pokedex.selected_entry)
           <span class="stat-chip-label">Éclos</span>
         </div>
         <div v-if="pokedex.stats?.total" class="dex-progress-wrap">
-          <UiProgressBar
-            :value="Math.round(((pokedex.stats?.owned ?? 0) / (pokedex.stats?.total || 1)) * 100)"
-            color="var(--color-accent-purple)"
-            height="6px"
-            :label="`${Math.round(((pokedex.stats?.owned ?? 0) / (pokedex.stats?.total || 1)) * 100)}% complété`"
-          />
+          <div class="dex-bar-bg">
+            <div class="dex-bar-fill" :style="{ width: safeProgress + '%' }" />
+          </div>
+          <span class="dex-bar-label">{{ safeProgress }}% complété</span>
         </div>
       </div>
       <div v-else class="stats-loading">Chargement du Pokédex…</div>
@@ -280,7 +285,10 @@ const detail = computed(() => pokedex.selected_entry)
 .stat-chip-val { font-family: var(--font-display); font-size: 1.2rem; color: var(--color-text-primary); }
 .stat-chip-max { font-size: 0.8rem; color: var(--color-text-muted); }
 .stat-chip-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-muted); }
-.dex-progress-wrap { min-width: 160px; }
+.dex-progress-wrap { min-width: 160px; display: flex; flex-direction: column; gap: 4px; }
+.dex-bar-bg   { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.dex-bar-fill { height: 100%; background: #9c6ade; border-radius: 3px; transition: width 0.5s ease; }
+.dex-bar-label { font-size: 11px; color: rgba(255,255,255,0.4); display: block; }
 .stats-loading { font-size: 0.82rem; color: var(--color-text-muted); padding: 4px 0; }
 
 /* Filters */
