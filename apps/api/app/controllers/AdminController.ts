@@ -535,6 +535,79 @@ export default class AdminController {
     }
   }
 
+  // ─── Pokémon joueur ───────────────────────────────────────────────────────
+
+  async playerPokemon({ params, response }: HttpContext) {
+    const rows = await db
+      .from('player_pokemon as pp')
+      .join('pokemon_species as ps', 'ps.id', 'pp.species_id')
+      .where('pp.player_id', params.id)
+      .select(
+        'pp.id', 'pp.level', 'pp.xp', 'pp.is_shiny', 'pp.stars',
+        'pp.slot_team', 'pp.slot_daycare', 'pp.nature',
+        'pp.iv_hp', 'pp.iv_atk', 'pp.iv_def',
+        'pp.iv_spatk', 'pp.iv_spdef', 'pp.iv_speed',
+        'ps.name_fr', 'ps.sprite_url', 'ps.type1', 'ps.type2', 'ps.rarity'
+      )
+      .orderBy('pp.slot_team', 'asc')
+    return response.ok({ pokemon: rows })
+  }
+
+  async editPokemon({ params, request, response }: HttpContext) {
+    const { level, xp } = request.body()
+    const updates: Record<string, any> = {}
+    if (level !== undefined) updates.level = Math.max(1, Math.min(100, Number(level)))
+    if (xp !== undefined) updates.xp = Math.max(0, Number(xp))
+    if (Object.keys(updates).length === 0) return response.badRequest({ message: 'Rien à modifier' })
+    await db.from('player_pokemon').where('id', params.pokemon_id).update(updates)
+    return response.ok({ message: 'Pokémon modifié' })
+  }
+
+  // ─── Items joueur ─────────────────────────────────────────────────────────
+
+  async playerItems({ params, response }: HttpContext) {
+    const rows = await db
+      .from('player_items as pi')
+      .join('items as i', 'i.id', 'pi.item_id')
+      .where('pi.player_id', params.id)
+      .select('pi.item_id', 'i.name_fr', 'i.effect_type', 'pi.quantity')
+      .orderBy('i.name_fr', 'asc')
+    return response.ok({ items: rows })
+  }
+
+  async grantItems({ params, request, player: admin, response }: HttpContext) {
+    const { item_id, quantity } = request.body()
+    if (!item_id || !quantity || quantity <= 0) {
+      return response.badRequest({ message: 'item_id et quantity requis' })
+    }
+    await db.rawQuery(`
+      INSERT INTO player_items (id, player_id, item_id, quantity, obtained_at)
+      VALUES (gen_random_uuid(), ?, ?, ?, NOW())
+      ON CONFLICT (player_id, item_id)
+      DO UPDATE SET quantity = player_items.quantity + EXCLUDED.quantity
+    `, [params.id, item_id, quantity])
+
+    await db.table('admin_audit_log').insert({
+      id: crypto.randomUUID(),
+      admin_id: admin.id,
+      action: 'grant_items',
+      target_type: 'player',
+      target_id: params.id,
+      payload: JSON.stringify({ item_id, quantity }),
+      created_at: new Date(),
+    })
+    return response.ok({ message: `${quantity}x item #${item_id} accordé` })
+  }
+
+  async itemsList({ response }: HttpContext) {
+    const rows = await db
+      .from('items')
+      .select('id', 'name_fr', 'effect_type')
+      .orderBy('name_fr', 'asc')
+      .limit(200)
+    return response.ok({ items: rows })
+  }
+
   // ─── Helpers privés ───────────────────────────────────────────────────────
 
   private async invalidatePlayerTokens(player_id: string): Promise<void> {

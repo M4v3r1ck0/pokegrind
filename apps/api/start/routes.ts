@@ -185,6 +185,13 @@ router
         router.get('/players', [AdminController, 'players'])
         router.get('/players/:id', [AdminController, 'playerDetail'])
 
+        // Pokémon + items joueur
+        router.get('/players/:id/pokemon', [AdminController, 'playerPokemon'])
+        router.put('/players/:id/pokemon/:pokemon_id', [AdminController, 'editPokemon']).use(middleware.adminAuth(['admin']))
+        router.get('/players/:id/items', [AdminController, 'playerItems'])
+        router.post('/players/:id/items', [AdminController, 'grantItems']).use(middleware.adminAuth(['admin']))
+        router.get('/items', [AdminController, 'itemsList'])
+
         // Actions sur joueurs — admin uniquement
         router.post('/players/:id/ban', [AdminController, 'banPlayer']).use(middleware.adminAuth(['admin']))
         router.post('/players/:id/unban', [AdminController, 'unbanPlayer']).use(middleware.adminAuth(['admin']))
