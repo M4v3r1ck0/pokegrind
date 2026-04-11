@@ -347,14 +347,14 @@ class CombatProgressionService {
    */
   private xpForLevel(level: number): number {
     if (level <= 1) return 0
-    return Math.floor(Math.pow(level, 3) * 0.1)
+    return Math.floor(Math.pow(level, 3) * 0.4)
   }
 
   /**
    * XP nécessaire pour passer du niveau `level` au niveau `level + 1`.
    */
   private xpToNextLevel(level: number): number {
-    return this.xpForLevel(level + 1) - this.xpForLevel(level)
+    return Math.max(1, this.xpForLevel(level + 1) - this.xpForLevel(level))
   }
 
   /**
@@ -403,7 +403,7 @@ class CombatProgressionService {
       }
 
       const xp_to_next = Math.max(1,
-        Math.floor(Math.pow(level + 1, 3) * 0.1) - Math.floor(Math.pow(level, 3) * 0.1)
+        Math.floor(Math.pow(level + 1, 3) * 0.4) - Math.floor(Math.pow(level, 3) * 0.4)
       )
 
       if (level_ups.length > 0) {
@@ -413,14 +413,14 @@ class CombatProgressionService {
           pokemon_id: pokemon.id,
           new_level: level_ups[level_ups.length - 1],
           levels_gained: level_ups.length,
-          xp: current_xp,
+          xp_current: current_xp,
           xp_to_next,
         })
       } else {
         // Émettre la mise à jour XP même sans level-up
         session.io.to(session.socket_room).emit('combat:xp_update', {
           pokemon_id: pokemon.id,
-          xp: current_xp,
+          xp_current: current_xp,
           xp_to_next,
         })
       }

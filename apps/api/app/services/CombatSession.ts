@@ -819,7 +819,7 @@ export default class CombatSession {
       : null
 
     const xpToNext = (level: number): number =>
-      Math.max(1, Math.floor(Math.pow(level + 1, 3) * 0.1) - Math.floor(Math.pow(level, 3) * 0.1))
+      Math.max(1, Math.floor(Math.pow(level + 1, 3) * 0.4) - Math.floor(Math.pow(level, 3) * 0.4))
 
     const mapPokemon = (p: CombatPokemon, isPlayer: boolean): CombatPokemonState => ({
       id: p.id,

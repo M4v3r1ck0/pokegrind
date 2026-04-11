@@ -144,20 +144,20 @@ export const useCombatStore = defineStore('combat', {
       })
 
       socket.on('combat:level_up', (event: any) => {
-        const name = this.getPokemonName(event.pokemon_id)
-        this.addLog(`⬆️ ${name} monte au niveau ${event.new_level} !`, 'info')
         const pokemon = this.player_team.find((p) => p.id === event.pokemon_id)
         if (pokemon) {
           pokemon.level = event.new_level
-          if (event.xp !== undefined) pokemon.xp = event.xp
-          if (event.xp_to_next !== undefined) pokemon.xp_to_next = event.xp_to_next
+          pokemon.xp = event.xp_current ?? 0
+          pokemon.xp_to_next = event.xp_to_next ?? 1
         }
+        const name = this.getPokemonName(event.pokemon_id)
+        this.addLog(`⬆️ ${name} passe au niveau ${event.new_level} !`, 'info')
       })
 
       socket.on('combat:xp_update', (event: any) => {
         const pokemon = this.player_team.find((p) => p.id === event.pokemon_id)
         if (pokemon) {
-          if (event.xp !== undefined) pokemon.xp = event.xp
+          if (event.xp_current !== undefined) pokemon.xp = event.xp_current
           if (event.xp_to_next !== undefined) pokemon.xp_to_next = event.xp_to_next
         }
       })
@@ -192,7 +192,11 @@ export const useCombatStore = defineStore('combat', {
       this.is_boss = state.is_boss
       this.boss_timer_remaining_ms = state.boss_timer_remaining_ms
       this.boss_trainer_name = state.boss_trainer_name ?? null
-      this.player_team = state.player_team ?? []
+      this.player_team = (state.player_team ?? []).map((p: any) => ({
+        ...p,
+        xp: p.xp ?? 0,
+        xp_to_next: p.xp_to_next ?? 1,
+      }))
       this.enemy_team = state.enemy_team ?? []
       this.session_active = state.session_active
 
