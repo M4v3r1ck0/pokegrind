@@ -119,12 +119,12 @@ const detail = computed(() => pokedex.selected_entry)
           <span class="stat-chip-val" style="color: var(--type-grass)">🥚 {{ pokedex.stats.hatched }}</span>
           <span class="stat-chip-label">Éclos</span>
         </div>
-        <div v-if="pokedex.stats.total" class="dex-progress-wrap">
+        <div v-if="pokedex.stats?.total" class="dex-progress-wrap">
           <UiProgressBar
-            :value="Math.round((pokedex.stats.owned / pokedex.stats.total) * 100)"
+            :value="Math.round(((pokedex.stats?.owned ?? 0) / (pokedex.stats?.total || 1)) * 100)"
             color="var(--color-accent-purple)"
             height="6px"
-            :label="`${Math.round((pokedex.stats.owned / pokedex.stats.total) * 100)}% complété`"
+            :label="`${Math.round(((pokedex.stats?.owned ?? 0) / (pokedex.stats?.total || 1)) * 100)}% complété`"
           />
         </div>
       </div>
@@ -155,7 +155,7 @@ const detail = computed(() => pokedex.selected_entry)
     <!-- ── Species grid ──────────────────────────────────────────── -->
     <div v-else class="dex-grid">
       <button
-        v-for="entry in pokedex.entries"
+        v-for="entry in (pokedex.entries ?? [])"
         :key="entry.species_id"
         class="dex-entry"
         :class="{
@@ -256,7 +256,7 @@ const detail = computed(() => pokedex.selected_entry)
           Learnset <span class="detail-count">({{ detail.learnset?.length ?? 0 }} moves)</span>
         </h3>
         <div class="learnset-grid">
-          <div v-for="move in (detail.learnset ?? [])" :key="move.move_id" class="learnset-item">
+          <div v-for="move in (detail?.learnset ?? [])" :key="move.move_id" class="learnset-item">
             <UiTypeBadge :type="move.type as any" size="sm" />
             <span class="learnset-name">{{ move.name_fr }}</span>
             <span v-if="move.power" class="learnset-power">{{ move.power }}</span>
