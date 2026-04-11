@@ -347,7 +347,7 @@ class CombatProgressionService {
    */
   private xpForLevel(level: number): number {
     if (level <= 1) return 0
-    return Math.floor(Math.pow(level, 3) * 0.8)
+    return Math.floor(Math.pow(level, 3) * 0.1)
   }
 
   /**
@@ -375,7 +375,7 @@ class CombatProgressionService {
 
     if (team.length === 0) return
 
-    const xp_per_pokemon = Math.max(1, Math.floor(xp_total / team.length))
+    const xp_per_pokemon = Math.max(1, Math.floor(xp_total * 3 / team.length))
 
     for (const pokemon of team) {
       let level = Number(pokemon.level)
@@ -403,7 +403,7 @@ class CombatProgressionService {
       }
 
       const xp_to_next = Math.max(1,
-        Math.floor(Math.pow(level + 1, 3) * 0.8) - Math.floor(Math.pow(level, 3) * 0.8)
+        Math.floor(Math.pow(level + 1, 3) * 0.1) - Math.floor(Math.pow(level, 3) * 0.1)
       )
 
       if (level_ups.length > 0) {
