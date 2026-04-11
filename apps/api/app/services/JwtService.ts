@@ -16,7 +16,7 @@ export default class JwtService {
    * Génère un access token JWT (expire 15min)
    */
   static generateAccessToken(payload: JwtPayload): string {
-    return jwt.sign(payload, env.get('JWT_SECRET'), { expiresIn: '15m' })
+    return jwt.sign(payload, env.get('JWT_SECRET'), { expiresIn: '24h' })
   }
 
   /**
