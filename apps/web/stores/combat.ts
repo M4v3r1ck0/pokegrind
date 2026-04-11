@@ -61,6 +61,8 @@ export const useCombatStore = defineStore('combat', {
     gold: 0,
     total_gold_earned_session: 0,
 
+    boss_trainer_name: null as string | null,
+
     // Boss timer interval
     _boss_timer_interval: null as ReturnType<typeof setInterval> | null,
   }),
@@ -189,6 +191,7 @@ export const useCombatStore = defineStore('combat', {
       this.battle_number = state.battle_number
       this.is_boss = state.is_boss
       this.boss_timer_remaining_ms = state.boss_timer_remaining_ms
+      this.boss_trainer_name = state.boss_trainer_name ?? null
       this.player_team = state.player_team ?? []
       this.enemy_team = state.enemy_team ?? []
       this.session_active = state.session_active
@@ -236,6 +239,9 @@ export const useCombatStore = defineStore('combat', {
       this.total_gold_earned_session += event.gold_earned
       const msg = `✅ Victoire ! +${event.gold_earned} or | Combat ${event.next_battle}/10${event.is_boss_next ? ' (BOSS !)' : ''}`
       this.addLog(msg, 'victory')
+      if (event.boss_trainer_name) {
+        this.addLog(`🏆 ${event.boss_trainer_name} est vaincu !`, 'victory')
+      }
     },
 
     // ── Helpers UI ────────────────────────────────────────────────────────
