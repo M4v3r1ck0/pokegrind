@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { navigateTo } from '#app'
-import axios from 'axios'
 import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: false })
@@ -36,20 +35,19 @@ type StartersByRegion = Record<string, StarterData[]>
 const startersByRegion = ref<StartersByRegion>({})
 const starters_loading = ref(true)
 
+const { public: { apiBase } } = useRuntimeConfig()
+
 async function loadStarters() {
   try {
-    const { data } = await axios.get('/api/starters')
-    startersByRegion.value = data
-  } catch {
-    // silently fail — les starters peuvent être chargés plus tard
+    startersByRegion.value = await $fetch<StartersByRegion>(`${apiBase}/starters`)
+  } catch (e) {
+    console.error('[register] Impossible de charger les starters:', e)
   } finally {
     starters_loading.value = false
   }
 }
 
-if (import.meta.client) {
-  loadStarters()
-}
+onMounted(loadStarters)
 
 const REGION_LABELS: Record<string, string> = {
   kanto: 'Kanto',
