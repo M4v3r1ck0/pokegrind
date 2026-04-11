@@ -4,6 +4,7 @@
 
 import type { HttpContext } from '@adonisjs/core/http'
 import dungeonService from '#services/DungeonService'
+import Dungeon from '#models/dungeon'
 
 async function getIo() {
   const { default: io } = await import('../../start/socket.js')
@@ -25,13 +26,13 @@ export default class DungeonController {
    * Détail d'un donjon (pool de récompenses inclus).
    */
   async show({ params, response }: HttpContext) {
-    const dungeon = await (await import('@adonisjs/lucid/services/db')).default
-      .from('dungeons')
-      .where({ id: Number(params.id), is_active: true })
+    const dungeon = await Dungeon.query()
+      .where('id', Number(params.id))
+      .where('is_active', true)
       .first()
 
     if (!dungeon) return response.notFound({ message: 'Donjon introuvable.' })
-    return response.ok(dungeon)
+    return response.ok(dungeon.serialize())
   }
 
   /**
