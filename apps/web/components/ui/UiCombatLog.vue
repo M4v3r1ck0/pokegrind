@@ -26,15 +26,17 @@ const visible = computed(() => props.entries.slice(-props.max))
 watch(() => props.entries.length, async () => {
   if (props.autoScroll) {
     await nextTick()
-    await new Promise(resolve => setTimeout(resolve, 60))
-    if (logEl.value) logEl.value.scrollTop = logEl.value.scrollHeight
+    setTimeout(() => {
+      if (logEl.value) logEl.value.scrollTop = logEl.value.scrollHeight
+    }, 80)
   }
 })
 
 onMounted(async () => {
   await nextTick()
-  await new Promise(resolve => setTimeout(resolve, 60))
-  if (logEl.value && props.autoScroll) logEl.value.scrollTop = logEl.value.scrollHeight
+  setTimeout(() => {
+    if (logEl.value && props.autoScroll) logEl.value.scrollTop = logEl.value.scrollHeight
+  }, 80)
 })
 
 function entryClass(e: CombatLogEntry) {
