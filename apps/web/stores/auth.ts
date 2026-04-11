@@ -99,16 +99,40 @@ export const useAuthStore = defineStore('auth', {
     async fetchMe() {
       const token = this.accessToken ?? readStoredToken()
       if (!token) return
+
       const api = useApi()
-      const data = await api<Player>('/auth/me', {
-        credentials: 'include',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      this.accessToken = token
-      this.player = data
-      this.isAuthenticated = true
-      saveToken(token)
-      return data
+
+      const doFetch = (t: string) =>
+        api<Player>('/auth/me', {
+          credentials: 'include',
+          headers: { Authorization: `Bearer ${t}` },
+        })
+
+      try {
+        // Premier essai avec le token courant
+        const data = await doFetch(token)
+        this.accessToken = token
+        this.player = data
+        this.isAuthenticated = true
+        saveToken(token)
+        return data
+      } catch (err: any) {
+        const status = err?.status ?? err?.response?.status ?? err?.statusCode
+        if (status !== 401) throw err
+
+        // Token expiré → tenter le refresh silencieusement
+        try {
+          await this.refreshToken()               // met à jour this.accessToken
+          const data = await doFetch(this.accessToken!)
+          this.player = data
+          this.isAuthenticated = true
+          return data
+        } catch {
+          // Refresh aussi invalide → session vraiment expirée
+          this.clearSession()
+          throw new Error('SESSION_EXPIRED')
+        }
+      }
     },
 
     setTokenFromUrl(token: string) {
