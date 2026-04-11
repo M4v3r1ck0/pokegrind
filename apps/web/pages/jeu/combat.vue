@@ -215,8 +215,8 @@ function formatTimer(ms: number): string {
                 :class="{ 'pp-empty': move.pp_current === 0 }"
                 :title="move.name_fr + ' — ' + move.pp_current + '/' + move.pp_max + ' PP'"
               >
-                <span class="pp-move-name">{{ move.name_fr.substring(0, 9) }}</span>
-                <span class="pp-count">{{ move.pp_current }}</span>
+                <span class="pp-move-name">{{ move.name_fr.substring(0, 10) }}</span>
+                <span class="pp-count">{{ move.pp_current }}/{{ move.pp_max }}</span>
               </span>
             </div>
             <div v-if="pokemon.current_hp <= 0" class="ko-overlay">K.O.</div>
