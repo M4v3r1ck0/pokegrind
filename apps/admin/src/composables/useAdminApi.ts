@@ -129,5 +129,16 @@ export function useAdminApi() {
     // ── Tour Infinie admin ─────────────────────────────────────────────────
     getAdminTower: () => api.get('/tower'),
     endTowerSeason: () => api.post('/tower/season/end'),
+
+    // ── Pokémon joueur ─────────────────────────────────────────────────────
+    getPlayerPokemon: (id: string) => api.get(`/players/${id}/pokemon`),
+    editPokemon: (id: string, pokemonId: string, body: { level?: number; xp?: number }) =>
+      api.put(`/players/${id}/pokemon/${pokemonId}`, body),
+
+    // ── Items joueur ───────────────────────────────────────────────────────
+    getPlayerItems: (id: string) => api.get(`/players/${id}/items`),
+    grantItems: (id: string, body: { item_id: number; quantity: number }) =>
+      api.post(`/players/${id}/items`, body),
+    getItemsList: () => api.get('/items'),
   }
 }
