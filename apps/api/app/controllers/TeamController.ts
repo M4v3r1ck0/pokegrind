@@ -208,7 +208,8 @@ export default class TeamController {
       .join('moves as m', 'ppm.move_id', 'm.id')
       .leftJoin('pokemon_learnset as pl', function (q) {
         q.on('pl.move_id', 'ppm.move_id')
-          .andOn('pl.species_id', db.raw('?', [pokemon.speciesId]))
+          .andOnVal('pl.species_id', pokemon.speciesId)
+          .andOnVal('pl.learn_method', 'level')
       })
       .where('ppm.player_pokemon_id', params.id)
       .select(
