@@ -56,7 +56,7 @@ async function openDepositModal(slot_number: number) {
   try {
     const api = nuxtApp.$api as any
     const { data } = await api.get('/player/pokemon', {
-      params: { limit: 100 },
+      params: { min_level: 100, sort: 'level', limit: 200 },
     })
     depositPokemonList.value = data.data ?? []
   } catch (e) {
