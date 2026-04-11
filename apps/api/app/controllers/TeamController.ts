@@ -182,7 +182,8 @@ export default class TeamController {
       return response.notFound({ message: 'Pokémon introuvable.' })
     }
 
-    const moves = await db
+    // Moves du learnset apprenables jusqu'au niveau actuel
+    const learnsetMoves = await db
       .from('pokemon_learnset as pl')
       .join('moves as m', 'pl.move_id', 'm.id')
       .where('pl.species_id', pokemon.speciesId)
@@ -201,10 +202,36 @@ export default class TeamController {
       )
       .orderBy('pl.level_learned_at', 'asc')
 
+    // Moves actuellement équipés (peuvent être hors learnset accessible si assignés par migration)
+    const currentMoves = await db
+      .from('player_pokemon_moves as ppm')
+      .join('moves as m', 'ppm.move_id', 'm.id')
+      .leftJoin('pokemon_learnset as pl', function (q) {
+        q.on('pl.move_id', 'ppm.move_id')
+          .andOn('pl.species_id', db.raw('?', [pokemon.speciesId]))
+      })
+      .where('ppm.player_pokemon_id', params.id)
+      .select(
+        'ppm.move_id',
+        db.raw('COALESCE(pl.level_learned_at, 0) as level_learned_at'),
+        'm.name_fr',
+        'm.type',
+        'm.category',
+        'm.power',
+        'm.accuracy',
+        'm.pp',
+        'm.priority'
+      )
+
+    // Fusionner : learnset + moves actuels, sans doublons
+    const seenIds = new Set(learnsetMoves.map((m: any) => m.move_id))
+    const extraMoves = currentMoves.filter((m: any) => !seenIds.has(m.move_id))
+    const allMoves = [...learnsetMoves, ...extraMoves]
+
     return response.ok({
-      moves: moves.map((m: any) => ({
+      moves: allMoves.map((m: any) => ({
         move_id: m.move_id,
-        level_learned_at: m.level_learned_at,
+        level_learned_at: Number(m.level_learned_at),
         name_fr: m.name_fr,
         type: m.type,
         category: m.category,

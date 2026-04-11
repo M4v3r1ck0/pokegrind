@@ -93,10 +93,12 @@ function openSlotModal(slot: number) {
 
 // ─── Modal détail ─────────────────────────────────────────────────────────
 function openDetail(p: TeamPokemon) {
-  selectedPokemon.value = p
+  // Préférer la version complète depuis pokemons (qui contient les moves chargés via fetchTeam)
+  const fullPokemon = team.pokemons.find(pk => pk.id === p.id) ?? p
+  selectedPokemon.value = fullPokemon
   showDetailModal.value = true
   showMoveModal.value = false
-  pendingMoveSlots.value = p.moves.map((m) => ({ slot: m.slot, move_id: m.move_id }))
+  pendingMoveSlots.value = fullPokemon.moves.map((m) => ({ slot: m.slot, move_id: m.move_id }))
 }
 
 function closeDetail() {
@@ -136,7 +138,23 @@ function assignMoveToSlot(slotNum: number, move_id: number) {
 function getSlotMove(slotNum: number): AvailableMove | undefined {
   const entry = pendingMoveSlots.value.find((s) => s.slot === slotNum)
   if (!entry) return undefined
-  return availableMoves.value.find((m) => m.move_id === entry.move_id)
+  // Chercher d'abord dans les moves disponibles du learnset
+  const fromLearnset = availableMoves.value.find((m) => m.move_id === entry.move_id)
+  if (fromLearnset) return fromLearnset
+  // Fallback : chercher dans les moves actuels du Pokémon (assignés avant qu'ils soient dans le learnset accessible)
+  const currentMove = selectedPokemon.value?.moves.find((m) => m.move_id === entry.move_id)
+  if (!currentMove) return undefined
+  return {
+    move_id: currentMove.move_id,
+    level_learned_at: 0,
+    name_fr: currentMove.name_fr,
+    type: currentMove.type,
+    category: currentMove.category,
+    power: currentMove.power,
+    accuracy: null as any,
+    pp: currentMove.pp_max,
+    priority: 0,
+  }
 }
 
 function clearSlot(slotNum: number) {
@@ -376,6 +394,9 @@ onMounted(() => { team.fetchTeam() })
           <div v-if="moveLoading" class="loading-msg">Chargement des moves…</div>
 
           <!-- Liste des moves disponibles -->
+          <div v-else-if="availableMoves.length === 0" class="no-moves">
+            Aucun move disponible pour ce Pokémon à son niveau actuel.
+          </div>
           <div v-else class="available-moves">
             <div
               v-for="m in availableMoves"
