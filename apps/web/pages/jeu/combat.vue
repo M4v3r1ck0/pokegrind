@@ -39,6 +39,10 @@ function mapEffectiveness(e?: number): 'super' | 'weak' | 'immune' | 'normal' | 
   return 'normal'
 }
 
+onUnmounted(() => {
+  combat.destroyCombat()
+})
+
 onMounted(async () => {
   if (auth.player?.id) {
     combat.initCombat(auth.player.id)

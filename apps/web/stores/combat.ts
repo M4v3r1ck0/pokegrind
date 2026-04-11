@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { io, type Socket } from 'socket.io-client'
 import { useNuxtApp, useRuntimeConfig } from '#app'
 
+// Module-level socket reference to survive store resets
+let _socket: Socket | null = null
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface CombatMoveState {
@@ -64,6 +67,9 @@ export const useCombatStore = defineStore('combat', {
     // ── Connexion Socket.io ──────────────────────────────────────────────
     initCombat(player_id: string) {
       if (!import.meta.client) return
+
+      // Guard : éviter la double-initialisation (HMR, navigation, layout + page)
+      if (_socket?.connected) return
 
       const config = useRuntimeConfig()
       const apiBase = (config.public.apiBase as string) || 'http://localhost:3333'
@@ -133,9 +139,22 @@ export const useCombatStore = defineStore('combat', {
         this.updateHP(event.pokemon_id, event.hp_remaining, event.hp_max)
       })
 
+      // Stocker la référence module-level pour le guard
+      _socket = socket
+
       // Stocker la socket dans la nuxtApp pour pouvoir l'utiliser ailleurs
       const nuxtApp = useNuxtApp()
       nuxtApp.provide('socket', socket)
+    },
+
+    // ── Nettoyage Socket.io ──────────────────────────────────────────────
+    destroyCombat() {
+      if (_socket) {
+        _socket.disconnect()
+        _socket = null
+      }
+      this.is_connected = false
+      this.session_active = false
     },
 
     // ── Application de l'état complet (reconnexion) ──────────────────────
