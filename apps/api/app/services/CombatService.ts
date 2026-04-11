@@ -544,9 +544,12 @@ export function selectNextMove(pokemon: CombatPokemon): { move: CombatMove; inde
   const moveCount = pokemon.moves.length
   if (moveCount === 0) return { move: STRUGGLE_MOVE, index: -1 }
 
-  // Vérifier si tous les PP sont vides
+  // Vérifier si tous les PP sont vides → reset rotation (GDD §5)
   const allEmpty = pokemon.pp_remaining.every((pp) => pp <= 0)
-  if (allEmpty) return { move: STRUGGLE_MOVE, index: -1 }
+  if (allEmpty) {
+    // Recharger les PP depuis pp_max (valeur stockée dans moves[i].pp)
+    pokemon.pp_remaining = pokemon.moves.map((m) => m.pp)
+  }
 
   // Choice lock: if locked to a move, only use that move
   if (pokemon.choice_locked_move !== null && pokemon.choice_locked_move !== undefined) {

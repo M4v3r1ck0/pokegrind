@@ -13,7 +13,6 @@ import {
   applyConfusion,
   selectNextMove,
   calcActionDelay,
-  STRUGGLE_MOVE,
 } from '#services/CombatService'
 import {
   applyItemAfterAction,
@@ -334,15 +333,7 @@ export default class CombatSession {
     if (aliveTargets.length === 0) return
 
     // 4. Sélectionner le move
-    // Éviter Lutte pour les Pokémon joueurs : reset PP du slot 0 si tout est vide
-    if (this.isPlayerPokemon(pokemon)) {
-      const allEmpty = pokemon.pp_remaining.every((pp) => pp <= 0)
-      if (allEmpty && pokemon.pp_remaining.length > 0) {
-        pokemon.pp_remaining[0] = 1
-      }
-    }
     const { move, index } = selectNextMove(pokemon)
-    const isStruggle = index === -1
 
     // 5. Sélectionner cible
     const target = aliveTargets[Math.floor(Math.random() * aliveTargets.length)]
@@ -379,20 +370,14 @@ export default class CombatSession {
       this.battle_damage_dealt += result.damage
     }
 
-    // 8. Décrémenter PP (pas pour Lutte)
-    if (!isStruggle && index !== -1 && pokemon.pp_remaining[index] > 0) {
+    // 8. Décrémenter PP
+    if (index !== -1 && pokemon.pp_remaining[index] > 0) {
       pokemon.pp_remaining[index] -= 1
     }
 
     // 9. Avancer l'index de move
-    if (!isStruggle && index !== -1) {
+    if (index !== -1) {
       pokemon.current_move_index = (index + 1) % pokemon.moves.length
-    }
-
-    // 10. Recoil Lutte (-8% HP max — réduit pour éviter l'auto-KO des Pokémon bas niveau)
-    if (isStruggle) {
-      const recoil = Math.max(1, Math.floor(pokemon.max_hp * 0.08))
-      pokemon.current_hp = Math.max(0, pokemon.current_hp - recoil)
     }
 
     // 11. Émettre l'action
@@ -431,7 +416,7 @@ export default class CombatSession {
     }
 
     // 12d. Choice lock: set locked move after first use
-    if (!isStruggle && index !== -1) {
+    if (index !== -1) {
       const locked = getChoiceLockMove(pokemon.equipped_item ?? null, move.id)
       if (locked !== null && pokemon.choice_locked_move === null) {
         pokemon.choice_locked_move = locked
@@ -443,8 +428,8 @@ export default class CombatSession {
       this.emitKO(target)
     }
 
-    // 14. Lutte recoil KO ou Life Orb KO
-    if ((isStruggle || after_event?.event_type === 'item_triggered') && pokemon.current_hp <= 0) {
+    // 14. Life Orb KO
+    if (after_event?.event_type === 'item_triggered' && pokemon.current_hp <= 0) {
       this.emitKO(pokemon)
     }
 
