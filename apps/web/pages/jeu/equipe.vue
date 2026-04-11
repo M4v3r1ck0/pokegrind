@@ -184,13 +184,23 @@ async function saveMoves() {
   }
 }
 
-onMounted(() => { team.fetchTeam() })
+onMounted(async () => {
+  await team.fetchTeam()
+})
 </script>
 
 <template>
   <div class="page-wrap">
   <div class="equipe-page">
     <h1 class="page-title">Équipe & Collection</h1>
+
+    <!-- ── Chargement ─────────────────────────────────────────────────────── -->
+    <div v-if="team.loading" class="loading-state">
+      <div class="loading-spinner" />
+      <p>Chargement de l'équipe…</p>
+    </div>
+
+    <div v-else>
 
     <!-- ── Section équipe (6 slots) ─────────────────────────────────────── -->
     <section class="team-section">
@@ -461,11 +471,32 @@ onMounted(() => { team.fetchTeam() })
         </div>
       </div>
     </Teleport>
+  </div><!-- fin v-else -->
   </div>
   </div>
 </template>
 
 <style scoped>
+/* ── Chargement ─────────────────────────────────────────────────────────── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  gap: 16px;
+  color: rgba(255,255,255,0.3);
+  font-size: 14px;
+}
+.loading-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: #9c6ade;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ── Layout ─────────────────────────────────────────────────────────────── */
 .equipe-page {
   max-width: 1200px;
