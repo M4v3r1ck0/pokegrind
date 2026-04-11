@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany, belongsTo } from '@adonisjs/lucid/orm'
 import type { HasMany, BelongsTo } from '@adonisjs/lucid/types/relations'
-import type PokemonLearnset from '#models/pokemon_learnset'
+import PokemonLearnset from '#models/pokemon_learnset'
 
 export default class PokemonSpecies extends BaseModel {
   static table = 'pokemon_species'
@@ -74,10 +74,6 @@ export default class PokemonSpecies extends BaseModel {
   @belongsTo(() => PokemonSpecies, { foreignKey: 'evolvesFromId' })
   declare evolvesFrom: BelongsTo<typeof PokemonSpecies>
 
-  @hasMany(
-    () =>
-      import('#models/pokemon_learnset').then((m) => m.default) as unknown as typeof PokemonLearnset,
-    { foreignKey: 'speciesId' }
-  )
+  @hasMany(() => PokemonLearnset, { foreignKey: 'speciesId' })
   declare learnset: HasMany<typeof PokemonLearnset>
 }

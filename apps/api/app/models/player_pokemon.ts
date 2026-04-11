@@ -1,9 +1,9 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
-import type Player from '#models/player'
-import type PokemonSpecies from '#models/pokemon_species'
-import type PlayerPokemonMove from '#models/player_pokemon_move'
+import Player from '#models/player'
+import PokemonSpecies from '#models/pokemon_species'
+import PlayerPokemonMove from '#models/player_pokemon_move'
 import type { Nature } from '@pokegrind/shared'
 
 export default class PlayerPokemon extends BaseModel {
@@ -72,17 +72,17 @@ export default class PlayerPokemon extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 
-  @belongsTo(() => import('#models/player').then((m) => m.default) as unknown as typeof Player, {
+  @belongsTo(() => Player, {
     foreignKey: 'playerId',
   })
   declare player: BelongsTo<typeof Player>
 
-  @belongsTo(() => import('#models/pokemon_species').then((m) => m.default) as unknown as typeof PokemonSpecies, {
+  @belongsTo(() => PokemonSpecies, {
     foreignKey: 'speciesId',
   })
   declare species: BelongsTo<typeof PokemonSpecies>
 
-  @hasMany(() => import('#models/player_pokemon_move').then((m) => m.default) as unknown as typeof PlayerPokemonMove, {
+  @hasMany(() => PlayerPokemonMove, {
     foreignKey: 'playerPokemonId',
   })
   declare moves: HasMany<typeof PlayerPokemonMove>

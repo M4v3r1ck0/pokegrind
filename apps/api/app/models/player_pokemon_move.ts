@@ -1,7 +1,7 @@
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import type PlayerPokemon from '#models/player_pokemon'
-import type Move from '#models/move'
+import PlayerPokemon from '#models/player_pokemon'
+import Move from '#models/move'
 
 export default class PlayerPokemonMove extends BaseModel {
   static table = 'player_pokemon_moves'
@@ -24,12 +24,12 @@ export default class PlayerPokemonMove extends BaseModel {
   @column()
   declare ppMax: number
 
-  @belongsTo(() => import('#models/player_pokemon').then((m) => m.default) as unknown as typeof PlayerPokemon, {
+  @belongsTo(() => PlayerPokemon, {
     foreignKey: 'playerPokemonId',
   })
   declare playerPokemon: BelongsTo<typeof PlayerPokemon>
 
-  @belongsTo(() => import('#models/move').then((m) => m.default) as unknown as typeof Move, {
+  @belongsTo(() => Move, {
     foreignKey: 'moveId',
   })
   declare move: BelongsTo<typeof Move>

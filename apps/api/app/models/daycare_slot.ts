@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import type Player from '#models/player'
-import type PlayerPokemon from '#models/player_pokemon'
+import Player from '#models/player'
+import PlayerPokemon from '#models/player_pokemon'
 
 export default class DaycareSlot extends BaseModel {
   static table = 'daycare_slots'
@@ -28,21 +28,12 @@ export default class DaycareSlot extends BaseModel {
   @column.dateTime()
   declare startedAt: DateTime | null
 
-  @belongsTo(
-    () => import('#models/player').then((m) => m.default) as unknown as typeof Player,
-    { foreignKey: 'playerId' }
-  )
+  @belongsTo(() => Player, { foreignKey: 'playerId' })
   declare player: BelongsTo<typeof Player>
 
-  @belongsTo(
-    () => import('#models/player_pokemon').then((m) => m.default) as unknown as typeof PlayerPokemon,
-    { foreignKey: 'playerPokemonId' }
-  )
+  @belongsTo(() => PlayerPokemon, { foreignKey: 'playerPokemonId' })
   declare pokemon: BelongsTo<typeof PlayerPokemon>
 
-  @belongsTo(
-    () => import('#models/player_pokemon').then((m) => m.default) as unknown as typeof PlayerPokemon,
-    { foreignKey: 'partnerPokemonId' }
-  )
+  @belongsTo(() => PlayerPokemon, { foreignKey: 'partnerPokemonId' })
   declare partner: BelongsTo<typeof PlayerPokemon>
 }

@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import type MoveEffect from '#models/move_effect'
+import MoveEffect from '#models/move_effect'
 
 export default class Move extends BaseModel {
   static table = 'moves'
@@ -39,7 +39,7 @@ export default class Move extends BaseModel {
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
-  @belongsTo(() => import('#models/move_effect').then((m) => m.default) as unknown as typeof MoveEffect, {
+  @belongsTo(() => MoveEffect, {
     foreignKey: 'effectId',
   })
   declare effect: BelongsTo<typeof MoveEffect>

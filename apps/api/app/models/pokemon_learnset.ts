@@ -1,7 +1,7 @@
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import type PokemonSpecies from '#models/pokemon_species'
-import type Move from '#models/move'
+import PokemonSpecies from '#models/pokemon_species'
+import Move from '#models/move'
 
 export default class PokemonLearnset extends BaseModel {
   static table = 'pokemon_learnset'
@@ -20,13 +20,9 @@ export default class PokemonLearnset extends BaseModel {
   @column()
   declare levelLearnedAt: number | null
 
-  @belongsTo(() => import('#models/pokemon_species').then((m) => m.default) as unknown as typeof PokemonSpecies, {
-    foreignKey: 'speciesId',
-  })
+  @belongsTo(() => PokemonSpecies, { foreignKey: 'speciesId' })
   declare species: BelongsTo<typeof PokemonSpecies>
 
-  @belongsTo(() => import('#models/move').then((m) => m.default) as unknown as typeof Move, {
-    foreignKey: 'moveId',
-  })
+  @belongsTo(() => Move, { foreignKey: 'moveId' })
   declare move: BelongsTo<typeof Move>
 }

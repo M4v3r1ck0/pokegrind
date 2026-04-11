@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
-import type BfSession from '#models/bf_session'
+import BfSession from '#models/bf_session'
 
 export default class BfRotation extends BaseModel {
   static table = 'bf_rotations'
@@ -36,9 +36,6 @@ export default class BfRotation extends BaseModel {
   @column.dateTime()
   declare endAt: DateTime
 
-  @hasMany(
-    () => import('#models/bf_session').then(m => m.default) as unknown as typeof BfSession,
-    { foreignKey: 'rotationId' }
-  )
+  @hasMany(() => BfSession, { foreignKey: 'rotationId' })
   declare sessions: HasMany<typeof BfSession>
 }

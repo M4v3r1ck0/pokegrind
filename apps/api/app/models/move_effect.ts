@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
-import type Move from '#models/move'
+import Move from '#models/move'
 
 export default class MoveEffect extends BaseModel {
   static table = 'move_effects'
@@ -33,6 +33,6 @@ export default class MoveEffect extends BaseModel {
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
-  @hasMany(() => import('#models/move').then((m) => m.default) as unknown as typeof Move)
+  @hasMany(() => Move)
   declare moves: HasMany<typeof Move>
 }

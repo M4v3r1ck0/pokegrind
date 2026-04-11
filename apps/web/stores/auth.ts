@@ -13,11 +13,28 @@ export interface Player {
   upgrades: string[]
 }
 
+const TOKEN_KEY = 'pg_access_token'
+
+function readStoredToken(): string | null {
+  if (!import.meta.client) return null
+  try { return localStorage.getItem(TOKEN_KEY) } catch { return null }
+}
+
+function saveToken(token: string) {
+  if (!import.meta.client) return
+  try { localStorage.setItem(TOKEN_KEY, token) } catch {}
+}
+
+function removeToken() {
+  if (!import.meta.client) return
+  try { localStorage.removeItem(TOKEN_KEY) } catch {}
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     player: null as Player | null,
-    accessToken: null as string | null,
-    isAuthenticated: false,
+    accessToken: readStoredToken(),
+    isAuthenticated: !!readStoredToken(),
   }),
 
   actions: {
@@ -31,6 +48,7 @@ export const useAuthStore = defineStore('auth', {
       this.accessToken = data.access_token
       this.player = data.player
       this.isAuthenticated = true
+      saveToken(data.access_token)
       return data
     },
 
@@ -44,6 +62,7 @@ export const useAuthStore = defineStore('auth', {
       this.accessToken = data.access_token
       this.player = data.player
       this.isAuthenticated = true
+      saveToken(data.access_token)
       return data
     },
 
@@ -73,35 +92,36 @@ export const useAuthStore = defineStore('auth', {
         credentials: 'include',
       })
       this.accessToken = data.access_token
+      saveToken(data.access_token)
       return data
     },
 
     async fetchMe() {
-      if (!this.accessToken) return
+      const token = this.accessToken ?? readStoredToken()
+      if (!token) return
       const api = useApi()
       const data = await api<Player>('/auth/me', {
         credentials: 'include',
-        headers: { Authorization: `Bearer ${this.accessToken}` },
+        headers: { Authorization: `Bearer ${token}` },
       })
+      this.accessToken = token
       this.player = data
       this.isAuthenticated = true
+      saveToken(token)
       return data
     },
 
     setTokenFromUrl(token: string) {
       this.accessToken = token
       this.isAuthenticated = true
+      saveToken(token)
     },
 
     clearSession() {
       this.player = null
       this.accessToken = null
       this.isAuthenticated = false
+      removeToken()
     },
   },
-
-  persist: import.meta.client ? {
-    storage: localStorage,
-    pick: ['accessToken', 'isAuthenticated', 'player'],
-  } : false,
 })

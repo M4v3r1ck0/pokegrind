@@ -5,7 +5,7 @@ import { compose } from '@adonisjs/core/helpers'
 import hash from '@adonisjs/core/services/hash'
 import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
-import type PlayerPokemon from '#models/player_pokemon'
+import PlayerPokemon from '#models/player_pokemon'
 import type { PlayerRole } from '@pokegrind/shared'
 
 const AuthFinder = withAuthFinder(() => hash.use('argon'), {
@@ -85,11 +85,7 @@ export default class Player extends compose(BaseModel, AuthFinder) {
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
 
-  @hasMany(
-    () =>
-      import('#models/player_pokemon').then((m) => m.default) as unknown as typeof PlayerPokemon,
-    { foreignKey: 'playerId' }
-  )
+  @hasMany(() => PlayerPokemon, { foreignKey: 'playerId' })
   declare pokemon: HasMany<typeof PlayerPokemon>
 
   static accessTokens = DbAccessTokensProvider.forModel(Player)

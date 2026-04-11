@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
-import type Player from '#models/player'
+import Player from '#models/player'
 
 export default class BfLeaderboard extends BaseModel {
   static table = 'bf_leaderboard'
@@ -22,9 +22,6 @@ export default class BfLeaderboard extends BaseModel {
   @column.dateTime()
   declare updatedAt: DateTime
 
-  @belongsTo(
-    () => import('#models/player').then(m => m.default) as unknown as typeof Player,
-    { foreignKey: 'playerId' }
-  )
+  @belongsTo(() => Player, { foreignKey: 'playerId' })
   declare player: BelongsTo<typeof Player>
 }

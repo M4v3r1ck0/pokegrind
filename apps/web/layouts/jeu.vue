@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 const auth = useAuthStore()
@@ -6,6 +7,20 @@ const route = useRoute()
 const router = useRouter()
 
 const mobileMenuOpen = ref(false)
+
+// Restaurer la session après un F5 : si le token est en localStorage mais
+// que le profil joueur n'est pas encore chargé, on appelle /auth/me.
+onMounted(async () => {
+  if (auth.accessToken && !auth.player) {
+    try {
+      await auth.fetchMe()
+    } catch {
+      // Token expiré et refresh cookie absent → déconnexion propre
+      auth.clearSession()
+      await router.push('/auth/login')
+    }
+  }
+})
 
 interface NavItem {
   label: string
