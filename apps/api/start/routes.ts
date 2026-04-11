@@ -473,6 +473,9 @@ router
         // ── Admin V3 — Tour Infinie ──────────────────────────────────────────
         router.get('/tower',                           [AdminV3Controller, 'getTower'])
         router.post('/tower/season/end',               [AdminV3Controller, 'endTowerSeason'])
+
+        // ── Admin V3 — Migrations one-shot ──────────────────────────────────
+        router.post('/migrate-starter-moves',          [AdminV3Controller, 'migrateStarterMoves'])
       })
       .prefix('/admin')
       .use(middleware.adminAuth())

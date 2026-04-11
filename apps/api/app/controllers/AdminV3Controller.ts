@@ -721,4 +721,87 @@ export default class AdminV3Controller {
 
     return response.ok({ message: 'Saison Tour Infinie terminée', season_id: season.id })
   }
+
+  // ── Migrations one-shot ───────────────────────────────────────────────────
+
+  /**
+   * POST /api/admin/migrate-starter-moves
+   * Attribue les 4 premiers moves level-up aux Pokémon joueurs qui n'en ont aucun.
+   * Migration one-shot pour les comptes créés avant le fix StarterService.
+   */
+  async migrateStarterMoves({ response, player }: HttpContext) {
+    // 1. Récupérer tous les player_pokemon sans aucun move
+    const pokemon_without_moves = await db
+      .from('player_pokemon as pp')
+      .whereNotExists(
+        db.from('player_pokemon_moves').whereColumn('player_pokemon_id', 'pp.id')
+      )
+      .select('pp.id', 'pp.species_id', 'pp.level')
+
+    let migrated_count = 0
+    let skipped_count = 0
+    const errors: string[] = []
+
+    for (const poke of pokemon_without_moves) {
+      try {
+        // 2. Chercher les 4 premiers moves level-up appris avant le niveau actuel
+        let learnset = await db
+          .from('pokemon_learnset as pl')
+          .join('moves as m', 'm.id', 'pl.move_id')
+          .where('pl.species_id', poke.species_id)
+          .where('pl.learn_method', 'level-up')
+          .where('pl.level_learned_at', '<=', poke.level)
+          .orderBy('pl.level_learned_at', 'asc')
+          .select('m.id as move_id', 'm.pp')
+          .limit(4)
+
+        // 3. Fallback : 4 premiers moves du learnset sans filtre niveau
+        if (learnset.length === 0) {
+          learnset = await db
+            .from('pokemon_learnset as pl')
+            .join('moves as m', 'm.id', 'pl.move_id')
+            .where('pl.species_id', poke.species_id)
+            .where('pl.learn_method', 'level-up')
+            .orderBy('pl.level_learned_at', 'asc')
+            .select('m.id as move_id', 'm.pp')
+            .limit(4)
+        }
+
+        if (learnset.length === 0) {
+          skipped_count++
+          continue
+        }
+
+        // 4. Insérer les moves slots 1-4
+        const moves_to_insert = learnset.map((m, idx) => ({
+          id: crypto.randomUUID(),
+          player_pokemon_id: poke.id,
+          slot: idx + 1,
+          move_id: m.move_id,
+          pp_current: m.pp ?? 10,
+          pp_max: m.pp ?? 10,
+        }))
+
+        await db.table('player_pokemon_moves').multiInsert(moves_to_insert)
+        migrated_count++
+      } catch (err: any) {
+        errors.push(`pokemon ${poke.id}: ${err.message}`)
+      }
+    }
+
+    await adminAuditService.log({
+      admin_id: player!.id,
+      action: 'migrate.starter_moves',
+      target_type: 'player_pokemon',
+      target_id: 'all',
+      payload: { migrated_count, skipped_count, errors_count: errors.length },
+    })
+
+    return response.ok({
+      message: 'Migration terminée',
+      migrated_count,
+      skipped_count,
+      errors,
+    })
+  }
 }
